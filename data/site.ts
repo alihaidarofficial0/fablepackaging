@@ -10,12 +10,12 @@ export const products = [
 ];
 
 export const industries = [
-  { name: "Cosmetics & Beauty", slug: "cosmetics", tone: "rose", icon: Sparkles },
-  { name: "Food & Beverage", slug: "food", tone: "olive", icon: UtensilsCrossed },
-  { name: "Retail & E-Commerce", slug: "retail", tone: "navy", icon: ShoppingBag },
-  { name: "Health & Wellness", slug: "health", tone: "sky", icon: HeartPulse },
+  { name: "Cosmetics & Beauty", slug: "cosmetics-beauty", tone: "rose", icon: Sparkles },
+  { name: "Food & Beverage", slug: "food-beverage", tone: "olive", icon: UtensilsCrossed },
+  { name: "Retail & E-Commerce", slug: "ecommerce", tone: "navy", icon: ShoppingBag },
+  { name: "Health & Wellness", slug: "health-wellness", tone: "sky", icon: HeartPulse },
   { name: "Electronics", slug: "electronics", tone: "charcoal", icon: Smartphone },
-  { name: "Apparel & Fashion", slug: "apparel", tone: "kraft", icon: Shirt },
+  { name: "Apparel & Fashion", slug: "apparel-fashion", tone: "kraft", icon: Shirt },
 ];
 
 export const nav = [

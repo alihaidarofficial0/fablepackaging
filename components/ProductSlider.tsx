@@ -51,19 +51,27 @@ export function ProductSlider({ products }: { products: Product[] }) {
   }, []);
 
   return (
-    <div className="product-slider relative" aria-label="Packaging products" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}>
-      <div className="absolute -top-14 right-0 hidden gap-2 min-[900px]:flex">
-        <button type="button" onClick={() => move(-1)} aria-label="Previous products" className="grid size-9 place-items-center rounded-full border border-[#E7DDD2] bg-white text-[#0B1F33] outline-none transition-colors hover:border-[#D96B2B] hover:bg-[#D96B2B] hover:text-white focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><ChevronLeft className="size-4" /></button>
-        <button type="button" onClick={() => move(1)} aria-label="Next products" className="grid size-9 place-items-center rounded-full border border-[#E7DDD2] bg-white text-[#0B1F33] outline-none transition-colors hover:border-[#D96B2B] hover:bg-[#D96B2B] hover:text-white focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><ChevronRight className="size-4" /></button>
-      </div>
-      <div ref={viewport} className="product-slider__viewport snap-x snap-mandatory overflow-x-auto overflow-y-hidden">
-        <div className="product-slider__track flex w-max gap-3 min-[900px]:gap-3">
-          {sliderProducts.map((product, index) => (
-            <div data-product-card key={`${product.slug}-${index}`} className="w-[calc((min(100vw,1320px)-64px)/2)] shrink-0 snap-start min-[520px]:w-[calc((min(100vw,1320px)-80px)/3)] min-[900px]:w-[calc((min(100vw,1320px)-84px)/4)] min-[1200px]:w-[calc((min(100vw,1320px)-108px)/6)]">
-              <ProductCard product={product} />
-            </div>
-          ))}
+    <div className="product-slider" aria-label="Packaging products" onMouseEnter={() => { paused.current = true; }} onMouseLeave={() => { paused.current = false; }}>
+      <div className="flex items-center gap-3 lg:gap-4">
+        <button type="button" onClick={() => move(-1)} aria-label="Previous products" className="hidden size-12 shrink-0 cursor-pointer place-items-center rounded-full border border-[#E7DDD2] bg-white text-[#0B1F33] outline-none transition-colors duration-200 hover:border-[#D96B2B] hover:bg-[#D96B2B] hover:text-white focus-visible:ring-2 focus-visible:ring-[#D96B2B] min-[900px]:grid">
+          <ChevronLeft className="size-5" />
+        </button>
+        <div ref={viewport} className="product-slider__viewport min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden">
+          <div className="product-slider__track flex w-max gap-4">
+            {sliderProducts.map((product, index) => (
+              <div
+                data-product-card
+                key={`${product.slug}-${index}`}
+                className="w-[min(78vw,320px)] shrink-0 snap-start min-[640px]:w-[calc((min(100vw,1320px)-80px)/2)] min-[900px]:w-[calc((min(100vw,1320px)-196px)/3)] min-[1280px]:w-[calc((min(100vw,1320px)-212px)/4)]"
+              >
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
         </div>
+        <button type="button" onClick={() => move(1)} aria-label="Next products" className="hidden size-12 shrink-0 cursor-pointer place-items-center rounded-full border border-[#E7DDD2] bg-white text-[#0B1F33] outline-none transition-colors duration-200 hover:border-[#D96B2B] hover:bg-[#D96B2B] hover:text-white focus-visible:ring-2 focus-visible:ring-[#D96B2B] min-[900px]:grid">
+          <ChevronRight className="size-5" />
+        </button>
       </div>
     </div>
   );

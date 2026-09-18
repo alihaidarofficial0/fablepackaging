@@ -1,2 +1,54 @@
 import { Clock, Mail, Phone } from "lucide-react";
-export default function ContactPage(){return <><section className="subhero"><div className="container"><p className="eyebrow">We’re here to help</p><h1>Let’s talk packaging.</h1><p>Questions about materials, sizing or a project already in motion? Send us a note.</p></div></section><section className="section"><div className="container contact-grid"><div className="contact-info"><h2>Talk to a real packaging person.</h2><p>Our team works across time zones to keep projects moving.</p><div><span><Mail/></span><p><b>Email</b><a href="mailto:hello@fablepack.co">hello@fablepack.co</a></p></div><div><span><Phone/></span><p><b>Phone</b><a href="tel:+18551234567">+1 (855) 123-4567</a></p></div><div><span><Clock/></span><p><b>Hours</b><small>Monday–Friday, 9am–6pm EST</small></p></div></div><form className="contact-form"><div className="form-grid"><label>Full name<input required placeholder="Your name"/></label><label>Work email<input required type="email" placeholder="you@company.com"/></label><label>Phone<input type="tel" placeholder="+1 555 000 0000"/></label><label>Company<input placeholder="Company name"/></label><label>Country<select><option>United States</option><option>Canada</option><option>United Kingdom</option><option>Europe</option><option>Other</option></select></label></div><label>How can we help?<textarea required rows={6} placeholder="Tell us about your packaging needs…"/></label><button className="button button-primary" type="submit">Send message →</button></form></div></section></>}
+
+export default function ContactPage() {
+  return (
+    <>
+      <section className="subhero">
+        <div className="container">
+          <p className="eyebrow">We’re here to help</p>
+          <h1>Let’s talk packaging.</h1>
+          <p>Questions about materials, sizing or a project already in motion? Send us a note.</p>
+        </div>
+      </section>
+      <section className="section">
+        <div className="container contact-grid">
+          <div className="contact-info">
+            <h2>Talk to a real packaging person.</h2>
+            <p>Our team works across time zones to keep projects moving.</p>
+            <div>
+              <span><Mail /></span>
+              <p><b>Email</b><a href="mailto:hello@fablepack.co">hello@fablepack.co</a></p>
+            </div>
+            <div>
+              <span><Phone /></span>
+              <p><b>Phone</b><a href="tel:+18551234567">+1 (855) 123-4567</a></p>
+            </div>
+            <div>
+              <span><Clock /></span>
+              <p><b>Hours</b><small>Monday–Friday, 9am–6pm EST</small></p>
+            </div>
+          </div>
+          <form className="contact-form">
+            <div className="form-grid">
+              <label>Full name<input required placeholder="Your name" /></label>
+              <label>Work email<input required type="email" placeholder="you@company.com" /></label>
+              <label>Phone<input type="tel" placeholder="+1 555 000 0000" /></label>
+              <label>Company<input placeholder="Company name" /></label>
+            </div>
+            <label>Country
+              <select defaultValue="United States" aria-label="Country">
+                <option>United States</option>
+                <option>Canada</option>
+                <option>United Kingdom</option>
+                <option>Europe</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>How can we help?<textarea required rows={6} placeholder="Tell us about your packaging needs…" /></label>
+            <button className="button button-primary" type="submit">Send message →</button>
+          </form>
+        </div>
+      </section>
+    </>
+  );
+}

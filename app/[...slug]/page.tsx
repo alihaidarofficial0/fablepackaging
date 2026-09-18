@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Box, Check, CircleGauge, Leaf, Palette, Recycle, Ruler, ShieldCheck, Sparkles } from "lucide-react";
-import { faqs, industries, products } from "@/data/site";
-import { ProductVisual, SectionTitle } from "@/components/ui";
+import { ArrowRight, Check } from "lucide-react";
+import { homeProducts } from "@/data/products";
+import { homeIndustries } from "@/data/industries";
+import { homeFaq } from "@/data/faq";
+import { Accordion } from "@/components/Accordion";
+import { IndustryCard } from "@/components/IndustryCard";
+import { IndustryDetailPage } from "@/components/IndustryDetailPage";
+import { ProductCard } from "@/components/ProductCard";
+import { ProductDetailPage } from "@/components/ProductDetailPage";
+import { ProjectCard } from "@/components/ProjectCard";
+import { homeProjects } from "@/data/projects";
+
 
 const pageCopy: Record<string,{title:string; eyebrow:string; intro:string}> = {
   "custom-boxes": {title:"Custom boxes, made around you.",eyebrow:"Packaging library",intro:"Explore proven box structures, then tailor every dimension, material and detail to your product."},
@@ -25,34 +35,61 @@ const pageCopy: Record<string,{title:string; eyebrow:string; intro:string}> = {
   "track-your-order":{title:"Track your order.",eyebrow:"Project status",intro:"Get in touch with your order reference and our team will share the latest update."},
   "help-center":{title:"How can we help?",eyebrow:"Fable support",intro:"Guides and answers for artwork, materials, production, shipping and more."},
   search:{title:"Find what you need.",eyebrow:"Search Fable",intro:"Search our products, industries and practical packaging guides."},
+  cart:{title:"Your bag is empty.",eyebrow:"No checkout needed",intro:"Fable quotes custom packaging rather than selling off-the-shelf boxes. Start a project and a specialist will take it from there."},
   sitemap:{title:"Sitemap",eyebrow:"Explore Fable",intro:"A quick path to packaging, resources and company information."},
   "privacy-policy":{title:"Privacy policy",eyebrow:"The important details",intro:"How we collect, use and protect your information."},
   terms:{title:"Terms of service",eyebrow:"The important details",intro:"The terms that govern use of our website and services."},
   "shipping-policy":{title:"Shipping policy",eyebrow:"The important details",intro:"How we plan, track and deliver packaging around the world."},
   "refund-policy":{title:"Refund policy",eyebrow:"The important details",intro:"Our approach to changes, cancellations and production issues."}
 };
-const materials=["Natural kraft","White paperboard","Corrugated board","Rigid greyboard","Recycled paper","Specialty paper"];
-const finishes=["Matte lamination","Soft touch","Gloss lamination","Spot UV","Foil stamping","Embossing","Debossing","Window cutouts"];
+const materials = [
+  { name: "Natural kraft", image: "/images/products/shipping-box.webp" },
+  { name: "White paperboard", image: "/images/products/mailer-box.webp" },
+  { name: "Corrugated board", image: "/images/products/shipping-box.webp" },
+  { name: "Rigid greyboard", image: "/images/products/rigid-box.webp" },
+  { name: "Recycled paper", image: "/images/products/folding-carton.webp" },
+  { name: "Specialty paper", image: "/images/home/faq-packaging.webp" },
+];
+const finishes = [
+  { name: "Matte lamination", image: "/images/products/mailer-box.webp" },
+  { name: "Soft touch", image: "/images/products/rigid-box.webp" },
+  { name: "Gloss lamination", image: "/images/products/display-box.webp" },
+  { name: "Spot UV", image: "/images/products/folding-carton.webp" },
+  { name: "Foil stamping", image: "/images/projects/velora-tea.webp" },
+  { name: "Embossing", image: "/images/projects/aurora-skincare.webp" },
+  { name: "Debossing", image: "/images/products/rigid-box.webp" },
+  { name: "Window cutouts", image: "/images/products/display-box.webp" },
+];
 
-export async function generateMetadata({params}:{params:Promise<{slug:string[]}>}):Promise<Metadata>{const {slug}=await params; const key=slug.join("/"); const base=pageCopy[slug[0]]; const product=products.find(p=>p.slug===slug[1]); const industry=industries.find(i=>i.slug===slug[1]); return {title:product?.name||industry?.name||base?.title||"Fable Packaging"};}
+export async function generateMetadata({params}:{params:Promise<{slug:string[]}>}):Promise<Metadata>{
+  const {slug}=await params;
+  const base=pageCopy[slug[0]];
+  const product=homeProducts.find(p=>p.slug===slug[1] || p.slug===slug[0]);
+  const industry=homeIndustries.find(i=>i.slug===slug[1]);
+  return {title:product?.name||industry?.name||base?.title||"Fable Packaging"};
+}
 
-export default async function GenericPage({params}:{params:Promise<{slug:string[]}>}){const {slug}=await params; const root=slug[0]; const detail=slug[1]; const product=products.find(p=>p.slug===detail); const industry=industries.find(i=>i.slug===detail);
-  if(product) return <ProductDetail product={product}/>;
-  if(industry) return <IndustryDetail industry={industry}/>;
-  const copy=pageCopy[root]; if(!copy && !["mailer-boxes","rigid-boxes"].includes(root)) notFound();
-  const c=copy||{title:"Packaging, thoughtfully made.",eyebrow:"Fable packaging",intro:"Explore ideas and practical resources for your next packaging project."};
-  return <><section className="subhero"><div className="container"><div className="breadcrumbs"><Link href="/">Home</Link><span>/</span><b>{c.title}</b></div><p className="eyebrow">{c.eyebrow}</p><h1>{c.title}</h1><p>{c.intro}</p></div></section><GenericBody root={root}/></>;
+export default async function GenericPage({params}:{params:Promise<{slug:string[]}>}){
+  const {slug}=await params;
+  const root=slug[0];
+  const detail=slug[1];
+  const product=homeProducts.find(p=>p.slug===detail) || (!detail ? homeProducts.find(p=>p.slug===root) : undefined);
+  const industry=homeIndustries.find(i=>i.slug===detail);
+  if(product) return <ProductDetailPage product={product}/>;
+  if(industry) return <IndustryDetailPage industry={industry}/>;
+  const copy=pageCopy[root];
+  if(!copy) notFound();
+  return <><section className="subhero"><div className="container"><div className="breadcrumbs"><Link href="/">Home</Link><span>/</span><b>{copy.title}</b></div><p className="eyebrow">{copy.eyebrow}</p><h1>{copy.title}</h1><p>{copy.intro}</p></div></section><GenericBody root={root}/></>;
 }
 
 function GenericBody({root}:{root:string}){
-  if(root==="custom-boxes")return <section className="section"><div className="container"><div className="listing-toolbar"><p>Showing {products.length} popular formats</p><select aria-label="Sort products"><option>Most popular</option><option>Name A–Z</option></select></div><div className="listing-grid">{products.map(p=><Link href={`/custom-boxes/${p.slug}`} className="product-card" key={p.slug}><ProductVisual tone={p.tone} icon={p.icon} label={p.name}/><div className="card-copy"><div><h3>{p.name}</h3><p>{p.note} · MOQ 100</p></div><ArrowRight/></div></Link>)}</div></div></section>;
-  if(root==="industries")return <section className="section"><div className="container"><div className="industry-page-grid">{industries.concat(industries).map((i,n)=><Link href={`/industries/${i.slug}`} className={`industry-card ${i.tone}`} key={n}><i.icon/><div><h3>{n>5?i.name.split(" & ")[0]+" Packaging":i.name}</h3><span>Explore solutions →</span></div></Link>)}</div></div></section>;
-  if(root==="materials"||root==="finishes") {const items=root==="materials"?materials:finishes;return <section className="section"><div className="container material-grid">{items.map((x,n)=><article key={x}><div className={`swatch swatch-${n}`}><Sparkles/></div><h2>{x}</h2><p>{root==="materials"?"A reliable, print-friendly option selected for strength, feel and end-of-life practicality.":"A refined surface effect that adds depth and gives key design details a memorable finish."}</p><Link className="text-link" href="/get-a-quote">Use in your project →</Link></article>)}</div></section>}
+  if(root==="custom-boxes")return <section className="section"><div className="container"><div className="listing-toolbar"><p>Showing {homeProducts.length} popular formats</p><select aria-label="Sort products" defaultValue="popular" suppressHydrationWarning><option value="popular">Most popular</option><option value="name">Name A–Z</option></select></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{homeProducts.map(product=><ProductCard key={product.slug} product={product}/>)}</div></div></section>;
+  if(root==="industries")return <section className="section"><div className="container"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{homeIndustries.map((industry)=><IndustryCard key={industry.slug} industry={industry}/>)}</div></div></section>;
+  if(root==="projects")return <section className="section"><div className="container"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{homeProjects.map((project)=><ProjectCard key={project.name} project={project}/>)}</div></div></section>;
+  if(root==="materials"||root==="finishes") {const items=root==="materials"?materials:finishes;return <section className="section"><div className="container material-grid">{items.map((item)=><article key={item.name} className="overflow-hidden rounded-[14px] border border-[#E7DDD2] bg-white"><div className="relative h-[210px] bg-[#F3E8DA]"><Image src={item.image} alt={item.name} fill sizes="(max-width: 700px) 100vw, 33vw" className="object-cover"/></div><div className="p-5"><h2 className="font-serif text-[1.6rem] text-[#0B1F33]">{item.name}</h2><p className="mt-2 text-sm text-[#667085]">{root==="materials"?"A reliable, print-friendly option selected for strength, feel and end-of-life practicality.":"A refined surface effect that adds depth and gives key design details a memorable finish."}</p><Link className="text-link mt-4" href="/get-a-quote">Use in your project →</Link></div></article>)}</div></section>}
   if(["privacy-policy","terms","shipping-policy","refund-policy"].includes(root))return <section className="section"><article className="container legal"><h2>Overview</h2><p>We believe important policies should be understandable. This page explains our practices in plain language and applies to visitors, customers and project inquiries.</p><h2>Your information and choices</h2><p>We only request information needed to respond to your inquiry, prepare quotations and deliver agreed services. We use reasonable safeguards and never sell personal information.</p><h2>Orders and production</h2><p>Custom goods enter production after proof approval. Timing and shipping estimates are shared with each quotation and may vary by specification, destination and carrier.</p><h2>Contact</h2><p>Questions can be sent to hello@fablepack.co. We aim to reply within one business day.</p></article></section>;
-  return <><section className="section"><div className="container content-feature"><div><p className="eyebrow">Guidance at every step</p><h2>Make decisions with confidence.</h2><p>Great packaging comes from the right structure, honest material advice, press-ready artwork and a production plan that respects your launch.</p><ul>{["Free structural consultation","Production-ready dielines","Artwork and prepress review","Transparent timelines","Worldwide logistics"].map(x=><li key={x}><Check/>{x}</li>)}</ul></div><div className="content-box"><Box/><b>Ideas become<br/>objects.</b><span>Designed with care.<br/>Made to perform.</span></div></div></section><Faq/><Cta/></>;
+  return <><section className="section"><div className="container content-feature"><div><p className="eyebrow">Guidance at every step</p><h2>Make decisions with confidence.</h2><p>Great packaging comes from the right structure, honest material advice, press-ready artwork and a production plan that respects your launch.</p><ul>{["Free structural consultation","Production-ready dielines","Artwork and prepress review","Transparent timelines","Worldwide logistics"].map(x=><li key={x}><Check/>{x}</li>)}</ul></div><div className="relative min-h-[360px] overflow-hidden rounded-[18px] border border-[#E7DDD2] bg-[#F3E8DA]"><Image src="/images/home/why-fable-packaging.webp" alt="Custom packaging designed with care" fill sizes="(max-width: 900px) 100vw, 40vw" className="object-cover"/></div></div></section><Faq/><Cta/></>;
 }
 
-function ProductDetail({product}:{product:typeof products[number]}){return <><section className="detail-hero"><div className="container detail-grid"><div className="detail-image"><ProductVisual tone={product.tone} icon={product.icon} label={product.name}/></div><div><div className="breadcrumbs"><Link href="/">Home</Link><span>/</span><Link href="/custom-boxes">Custom boxes</Link><span>/</span><b>{product.name}</b></div><p className="eyebrow">Made to order · MOQ 100</p><h1>{product.name}</h1><p>Premium, protective and completely customizable—built to fit your product and express your brand.</p><div className="rating">★★★★★ <span>4.9 · 127 reviews</span></div><div className="quick-specs"><span><CircleGauge/><b>10–15 days</b><small>Production</small></span><span><Ruler/><b>Any size</b><small>Custom dimensions</small></span><span><Recycle/><b>Eco options</b><small>Available</small></span></div><Link className="button button-primary" href="/get-a-quote">Get a custom quote <ArrowRight/></Link></div></div></section><section className="section"><div className="container"><SectionTitle eyebrow="Your box, your way" title="Every detail can be tailored."/><div className="benefit-grid">{[[Ruler,"Perfectly fitted","Custom dimensions keep products safe and shipping efficient."],[Palette,"Beautifully printed","Crisp color inside and out, with finishes that invite touch."],[ShieldCheck,"Made to perform","Materials chosen for the rigors of retail and delivery."],[Leaf,"Thoughtful options","Recycled and responsibly sourced choices are available."]].map(([I,t,d])=>{const Icon=I as typeof Box;return <article key={String(t)}><Icon/><h3>{String(t)}</h3><p>{String(d)}</p></article>})}</div></div></section><Faq/><Cta/></>}
-function IndustryDetail({industry}:{industry:typeof industries[number]}){const Icon=industry.icon; return <><section className="detail-hero"><div className="container detail-grid"><div className={`industry-feature ${industry.tone}`}><Icon/><span>{industry.name}</span><div>FABLE</div></div><div><div className="breadcrumbs"><Link href="/">Home</Link><span>/</span><Link href="/industries">Industries</Link></div><p className="eyebrow">Packaging for {industry.name}</p><h1>Make the first impression part of the product.</h1><p>Structures, materials and finishes shaped around your market—from shelf presence to safe delivery.</p><Link className="button button-primary" href="/get-a-quote">Plan your packaging <ArrowRight/></Link></div></div></section><section className="section"><div className="container"><SectionTitle title={`Popular ${industry.name.toLowerCase()} packaging`}/><div className="listing-grid">{products.slice(0,3).map(p=><Link href={`/custom-boxes/${p.slug}`} className="product-card" key={p.slug}><ProductVisual tone={p.tone} icon={p.icon} label={p.name}/><div className="card-copy"><h3>{p.name}</h3><ArrowRight/></div></Link>)}</div></div></section><Faq/><Cta/></>}
-function Faq(){return <section className="section faq"><div className="container"><SectionTitle eyebrow="Useful to know" title="Frequently asked questions"/><div className="faq-list">{faqs.map(([q,a],i)=><details key={q} open={i===0}><summary>{q}<span>+</span></summary><p>{a}</p></details>)}</div></div></section>}
+function Faq(){return <section className="section faq"><div className="container max-w-[860px]"><p className="eyebrow">Useful to know</p><h2 className="mb-6">Frequently asked questions</h2><Accordion items={homeFaq}/></div></section>}
 function Cta(){return <section className="container bottom-cta"><div><p className="eyebrow">Start your project</p><h2>Ready to make something memorable?</h2><p>Get expert guidance and a clear quote—usually within one business day.</p></div><Link className="button button-light" href="/get-a-quote">Get a free quote <ArrowRight/></Link></section>}

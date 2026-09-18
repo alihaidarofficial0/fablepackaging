@@ -39,7 +39,7 @@ export default function HomePage() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}/>
     <Hero/>
     <TrustSection/>
-    <section id="products" className="bg-[#FFF9F2] py-16 sm:py-20 lg:pb-20 lg:pt-[90px]">
+    <section id="products" className="bg-[#FFF9F2] py-14 sm:py-16 lg:py-20">
       <Container>
         <div className="mb-10 flex flex-col items-start justify-between gap-5 md:flex-row md:items-end">
           <div className="max-w-[720px]">
@@ -47,7 +47,7 @@ export default function HomePage() {
             <h2 className="font-serif text-[clamp(2.5rem,5vw,3.5rem)] font-medium leading-[1.05] tracking-[-0.035em] text-[#0B1F33]">Find the right box for your product</h2>
             <p className="mt-5 max-w-[700px] text-base leading-[1.6] text-[#667085] sm:text-[17px]">Explore our most-loved packaging formats, built to protect, present and elevate your products.</p>
           </div>
-          <Link href="/custom-boxes" className="inline-flex min-h-11 shrink-0 items-center border-b border-[#D96B2B]/45 text-sm font-semibold text-[#D96B2B] transition-colors duration-[250ms] hover:text-[#BC5420] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">View all packaging <span className="ml-2" aria-hidden="true">→</span></Link>
+          <Link href="/custom-boxes" className="inline-flex min-h-11 shrink-0 cursor-pointer items-center border-b border-[#D96B2B]/45 text-sm font-semibold text-[#D96B2B] transition-colors duration-[250ms] hover:text-[#BC5420] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">View all packaging <span className="ml-2" aria-hidden="true">→</span></Link>
         </div>
         <ProductSlider products={homeProducts} />
         <div className="mt-10 flex items-center gap-5" aria-label="Packaging selection help">
@@ -62,7 +62,7 @@ export default function HomePage() {
     </section>
     <WhyFable/>
     <MaterialsSection/>
-    <section id="industries" className="bg-[#FFF9F2] py-20 lg:py-24">
+    <section id="industries" className="bg-[#FFF9F2] py-14 sm:py-16 lg:py-20">
       <Container>
         <div className="mb-10 flex flex-col items-start justify-between gap-5 md:flex-row md:items-end">
           <div className="max-w-[760px]">
@@ -79,7 +79,7 @@ export default function HomePage() {
     </section>
     <SustainabilitySection/>
     <ProcessSection/>
-    <section id="projects" className="bg-[#FFF9F2] py-20 lg:py-24"><Container><SectionHeading eyebrow="Featured projects" title="Fresh from the studio" copy="Real structures. Original artwork. Packaging made to be remembered." action={{ label: "View all projects", href: "/projects" }}/><div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">{homeProjects.map(project => <ProjectCard key={project.name} project={project}/>)}</div></Container></section>
+    <section id="projects" className="bg-[#FFF9F2] py-14 sm:py-16 lg:py-20"><Container><SectionHeading eyebrow="Featured projects" title="Fresh from the studio" copy="Real structures. Original artwork. Packaging made to be remembered." action={{ label: "View all projects", href: "/projects" }}/><div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">{homeProjects.map(project => <ProjectCard key={project.name} project={project}/>)}</div></Container></section>
     <Testimonial/>
     <QuoteStarter/>
     <FAQ/>

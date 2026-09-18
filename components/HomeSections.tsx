@@ -26,7 +26,7 @@ export function Hero() {
   const benefits = [[Sparkles, "Free design support"], [Box, "Low minimums"], [Truck, "Fast turnaround"]] as const;
 
   return (
-    <section className="relative isolate min-h-[720px] overflow-hidden bg-[#FFF9F2] lg:min-h-[680px]">
+    <section className="relative min-h-[720px] overflow-hidden bg-[#FFF9F2] lg:min-h-[680px]">
       <Image src="/images/home/fable-hero-packaging.webp" alt="Open navy mailer box with kraft, burnt-orange and sage cartons arranged with botanical leaves and limestone props" fill priority sizes="100vw" className="object-cover object-[72%_center] lg:object-center" />
       <div className="absolute inset-0 -z-0 bg-[linear-gradient(90deg,rgba(255,249,242,0.99)_0%,rgba(255,249,242,0.96)_27%,rgba(255,249,242,0.68)_48%,rgba(255,249,242,0.08)_76%)] lg:bg-[linear-gradient(90deg,rgba(255,249,242,0.99)_0%,rgba(255,249,242,0.94)_28%,rgba(255,249,242,0.45)_49%,rgba(255,249,242,0)_76%)]" />
       <Container className="relative z-10 grid min-h-[720px] items-center py-16 lg:min-h-[680px] lg:grid-cols-[46fr_54fr] lg:py-[72px]">
@@ -43,13 +43,26 @@ export function Hero() {
 }
 
 export function TrustSection() {
+  const points = [
+    ["Free", "design support"],
+    ["Low", "minimum orders"],
+    ["1-day", "typical quotes"],
+    ["FSC®", "material options"],
+    ["Worldwide", "delivery"],
+  ] as const;
+
   return (
-    <section aria-label="Trusted brands" className="border-y border-[#0B1F33]/10 bg-white py-8">
+    <section aria-label="Why brands choose Fable" className="border-y border-[#0B1F33]/10 bg-white py-7">
       <Container>
-        <p className="text-center text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#667085]">Trusted by growing brands worldwide</p>
-        <div className="mt-6 grid grid-cols-2 items-center gap-x-5 gap-y-6 text-center text-sm font-extrabold text-[#0B1F33]/65 sm:grid-cols-4 lg:grid-cols-7 lg:text-base">
-          <span>NORTH & CO.</span><span className="font-serif text-xl">onefolk</span><span>grüvi</span><span className="font-serif">CommonKind</span><span>DAWN</span><span className="font-serif text-xl">Hearth</span><span>OLIO</span>
-        </div>
+        <p className="text-center text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#667085]">Built for custom packaging, start to finish</p>
+        <ul className="mt-6 grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+          {points.map(([stat, label]) => (
+            <li key={label} className="text-center">
+              <strong className="block font-serif text-[1.35rem] font-medium tracking-[-0.03em] text-[#0B1F33]">{stat}</strong>
+              <span className="mt-1 block text-[12px] font-bold uppercase tracking-[0.12em] text-[#667085]">{label}</span>
+            </li>
+          ))}
+        </ul>
       </Container>
     </section>
   );
@@ -66,7 +79,7 @@ export function WhyFable() {
   ] as const;
 
   return (
-    <section id="why-fable" className="bg-[linear-gradient(135deg,#FFF9F2_0%,#FFF9F2_55%,#F8EDE1_100%)] py-20 lg:py-28">
+    <section id="why-fable" className="bg-[linear-gradient(135deg,#FFF9F2_0%,#FFF9F2_55%,#F8EDE1_100%)] py-14 sm:py-16 lg:py-20">
       <Container className="grid gap-10 md:grid-cols-2 md:items-center lg:grid-cols-[32fr_43fr_25fr] lg:gap-8 xl:gap-10">
         <div>
           <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Why Fable</p>
@@ -87,8 +100,8 @@ export function WhyFable() {
         </div>
         <ul className="grid gap-2 md:col-span-2 md:grid-cols-2 lg:col-span-1 lg:grid-cols-1" aria-label="Fable packaging services">
           {features.map(([Icon, title, subtitle]) => (
-            <li key={title} className="group flex min-h-[88px] items-center gap-3 rounded-[14px] border border-[#E7DDD2] bg-white/75 p-3 transition-colors hover:border-[#D96B2B]/35 hover:bg-white">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[#D96B2B]/20 bg-[#F3E8DA] text-[#0B1F33] transition-colors group-hover:bg-[#D96B2B] group-hover:text-white" aria-hidden="true"><Icon className="size-5" /></span>
+            <li key={title} className="flex min-h-[88px] items-center gap-3 rounded-[14px] border border-[#E7DDD2] bg-white/75 p-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[#D96B2B]/20 bg-[#F3E8DA] text-[#0B1F33]" aria-hidden="true"><Icon className="size-5" /></span>
               <span><strong className="block text-[13px] leading-4 text-[#0B1F33]">{title}</strong><span className="mt-1 block text-[12px] leading-4 text-[#667085]">{subtitle}</span></span>
             </li>
           ))}
@@ -100,25 +113,27 @@ export function WhyFable() {
 
 export function MaterialsSection() {
   const materials = [
-    ["Kraft Paper", "Natural, tactile and direct", "bg-[#B98961]"],
-    ["Premium Paperboard", "Smooth, crisp and versatile", "bg-[#EEE7DC]"],
-    ["Corrugated Board", "Protective strength for transit", "bg-[#8D694D]"],
-    ["Rigid Board", "Weight and presence for gifting", "bg-[#263442]"],
+    ["Kraft Paper", "Natural, tactile and direct", "/images/products/shipping-box.webp"],
+    ["Premium Paperboard", "Smooth, crisp and versatile", "/images/products/mailer-box.webp"],
+    ["Corrugated Board", "Protective strength for transit", "/images/products/shipping-box.webp"],
+    ["Rigid Board", "Weight and presence for gifting", "/images/products/rigid-box.webp"],
   ];
   const finishes = ["Matte", "Soft Touch", "Gloss", "Gold Foil", "Silver Foil", "Spot UV", "Embossing", "Debossing"];
   return (
-    <section id="materials" className="bg-white py-20 lg:py-24">
+    <section id="materials" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
         <SectionHeading eyebrow="Make it distinctly yours" title="Materials and finishes that make an impression." copy="From natural kraft textures to soft-touch finishes and metallic foils, choose the details that make your packaging unmistakably yours." />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {materials.map(([name, copy, tone]) => (
-            <article key={name} className="overflow-hidden rounded-[14px] border border-[#E7DDD2] bg-[#FFF9F2]">
-              <div className={`h-36 ${tone}`}><div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,.28),transparent_45%)]" /></div>
+          {materials.map(([name, copy, image]) => (
+            <Link key={name} href="/materials" className="overflow-hidden rounded-[14px] border border-[#E7DDD2] bg-[#FFF9F2] outline-none transition-colors hover:border-[#D96B2B]/65 focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">
+              <div className="relative h-36 bg-[#F3E8DA]">
+                <Image src={image} alt={name} fill sizes="(max-width: 640px) 100vw, 25vw" className="object-cover" />
+              </div>
               <div className="p-5"><h3 className="font-serif text-[22px] text-[#0B1F33]">{name}</h3><p className="mt-2 text-sm leading-5 text-[#667085]">{copy}</p></div>
-            </article>
+            </Link>
           ))}
         </div>
-        <div className="mt-8 flex flex-wrap gap-2">{finishes.map((finish) => <span key={finish} className="rounded-full border border-[#E7DDD2] bg-[#FFF9F2] px-4 py-2.5 text-sm font-bold text-[#0B1F33]">{finish}</span>)}</div>
+        <div className="mt-8 flex flex-wrap gap-2">{finishes.map((finish) => <Link key={finish} href="/finishes" className="rounded-full border border-[#E7DDD2] bg-[#FFF9F2] px-4 py-2.5 text-sm font-bold text-[#0B1F33] outline-none transition-colors hover:border-[#D96B2B]/65 hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]">{finish}</Link>)}</div>
         <Link href="/materials" className="mt-8 inline-flex min-h-11 items-center gap-2 font-bold text-[#D96B2B] transition-colors hover:text-[#BC5420] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">Explore materials & finishes <ArrowRight className="size-4" aria-hidden="true" /></Link>
       </Container>
     </section>
@@ -128,7 +143,7 @@ export function MaterialsSection() {
 export function SustainabilitySection() {
   const benefits = [[Recycle, "Recyclable materials"], [Palette, "Soy-based inks"], [ShieldCheck, "FSC® options"], [Leaf, "Plastic-free choices"], [Earth, "Lower-impact shipping"]] as const;
   return (
-    <section id="sustainability" className="overflow-hidden bg-[radial-gradient(circle_at_64%_45%,#17443d,#071827_70%)] py-20 text-white lg:py-24">
+    <section id="sustainability" className="overflow-hidden bg-[radial-gradient(circle_at_64%_45%,#17443d,#071827_70%)] py-14 text-white sm:py-16 lg:py-20">
       <Container className="grid items-center gap-10 lg:grid-cols-[1fr_.9fr_.68fr] lg:gap-12">
         <div>
           <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#E6AD65]">Packaging with a lighter footprint</p>
@@ -155,7 +170,7 @@ export function ProcessSection() {
     [Truck, "We deliver", "Approve production and Fable handles the rest."],
   ] as const;
   return (
-    <section id="how-it-works" className="bg-white py-20 lg:py-24">
+    <section id="how-it-works" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
         <div className="mb-12 text-center"><p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">A clear path forward</p><h2 className="font-serif text-[clamp(2.5rem,4vw,3.5rem)] leading-none text-[#0B1F33]">How it works</h2><p className="mt-4 text-base text-[#667085]">Four simple steps from idea to delivery.</p></div>
         <div className="relative grid gap-5 md:grid-cols-4 md:gap-7 before:absolute before:left-[10%] before:right-[10%] before:top-10 before:hidden before:border-t before:border-dashed before:border-[#D96B2B]/35 md:before:block">
@@ -173,7 +188,7 @@ export function ProcessSection() {
 
 export function Testimonial() {
   return (
-    <section aria-labelledby="customer-proof-heading" className="bg-white py-20 lg:py-24">
+    <section aria-labelledby="customer-proof-heading" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
         <article className="grid min-h-[340px] overflow-hidden rounded-[18px] border border-[#E7DDD2] bg-[linear-gradient(135deg,#FFF9F2,#F3E8DA)] lg:grid-cols-[1.25fr_.75fr]">
           <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
@@ -192,7 +207,7 @@ export function Testimonial() {
 
 export function FinalCTA() {
   return (
-    <section className="bg-white pb-16 lg:pb-20">
+    <section className="bg-white pb-12 sm:pb-14 lg:pb-16">
       <Container>
         <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(110deg,#071827_0%,#0B1F33_58%,#123148_100%)] px-7 py-9 text-white sm:px-10 sm:py-11 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-16 lg:py-16">
           <Box className="pointer-events-none absolute -right-9 -top-10 size-52 text-[#8CAFC5]/10" strokeWidth={1} aria-hidden="true" />

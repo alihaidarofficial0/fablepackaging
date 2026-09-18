@@ -1,95 +1,232 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Package } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 import { homeProducts } from "@/data/products";
+import { homeIndustries } from "@/data/industries";
 
-export type MenuItem = { label: string; href: string; description?: string };
+export type MenuItem = { label: string; href: string; description?: string; image?: string };
 
-const productItems: MenuItem[] = homeProducts.map((product) => ({
-  label: product.name,
-  href: `/custom-boxes/${product.slug}`,
-  description: product.subtitle,
-}));
-
-type NavDropdownProps = {
+export type NavMenu = {
   label: string;
   href: string;
-  items: MenuItem[];
   intro: string;
-  wide?: boolean;
+  items: MenuItem[];
 };
 
-export function NavDropdown({ label, href, items, intro, wide = false }: NavDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const menuId = `${useId().replaceAll(":", "")}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+export const navMenus: NavMenu[] = [
+  {
+    label: "Custom Boxes",
+    href: "/custom-boxes",
+    intro: "Made around your product.",
+    items: homeProducts.map((product) => ({
+      label: product.name,
+      href: `/custom-boxes/${product.slug}`,
+      description: product.subtitle,
+      image: product.image,
+    })),
+  },
+  {
+    label: "Industries",
+    href: "/industries",
+    intro: "Packaging shaped around your sector.",
+    items: homeIndustries.map((industry) => ({
+      label: industry.name,
+      href: `/industries/${industry.slug}`,
+      description: industry.description,
+      image: industry.image,
+    })),
+  },
+  {
+    label: "Materials",
+    href: "/materials",
+    intro: "Details that make the difference.",
+    items: [
+      { label: "Kraft Paper", href: "/materials/kraft-paper", description: "Natural, tactile and direct.", image: "/images/products/shipping-box.webp" },
+      { label: "Premium Paperboard", href: "/materials/premium-paperboard", description: "Smooth, crisp and versatile.", image: "/images/products/mailer-box.webp" },
+      { label: "Corrugated Board", href: "/materials/corrugated-board", description: "Protective strength for transit.", image: "/images/products/shipping-box.webp" },
+      { label: "Rigid Board", href: "/materials/rigid-board", description: "Weight and presence for gifting.", image: "/images/products/rigid-box.webp" },
+    ],
+  },
+  {
+    label: "Design Support",
+    href: "/design-support",
+    intro: "Clarity from first sketch to final proof.",
+    items: [
+      { label: "Artwork Guidelines", href: "/artwork-guidelines", description: "Prepare artwork with confidence.", image: "/images/home/faq-packaging.webp" },
+      { label: "Structural Design", href: "/design-support", description: "A structure made for your product.", image: "/images/products/display-box.webp" },
+      { label: "Samples & Prototypes", href: "/samples", description: "Review form and finish before production.", image: "/images/products/folding-carton.webp" },
+      { label: "Get Expert Help", href: "/contact", description: "Talk with a packaging specialist.", image: "/images/home/why-fable-packaging.webp" },
+    ],
+  },
+];
 
-  function cancelClose() {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  }
+const directLinks = [
+  { label: "About", href: "/about" },
+  { label: "Blog", href: "/blog" },
+] as const;
 
-  function scheduleClose() {
-    cancelClose();
-    closeTimer.current = setTimeout(() => setOpen(false), 140);
-  }
-
-  useEffect(() => {
-    function handlePointerDown(event: PointerEvent) {
-      if (root.current && !root.current.contains(event.target as Node)) setOpen(false);
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && open) {
-        setOpen(false);
-        trigger.current?.focus();
-      }
-    }
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      cancelClose();
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  function focusFirstItem() {
-    requestAnimationFrame(() => panel.current?.querySelector<HTMLAnchorElement>("[role='menuitem']")?.focus());
-  }
-
+export function DesktopNav({
+  openMenu,
+  onOpen,
+  onClose,
+}: {
+  openMenu: string | null;
+  onOpen: (label: string) => void;
+  onClose: () => void;
+}) {
   return (
-    <div ref={root} className="relative flex h-full items-center" onMouseEnter={() => { cancelClose(); setOpen(true); }} onMouseLeave={scheduleClose} onFocus={cancelClose} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }}>
-      <div className="flex h-full items-center">
-        <Link href={href} onClick={() => setOpen(false)} className="flex h-full items-center rounded-sm pl-2 pr-1 text-[13px] font-semibold text-[#344054] outline-none transition-colors hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]">{label}</Link>
-        <button ref={trigger} type="button" aria-expanded={open} aria-controls={menuId} aria-haspopup="menu" aria-label={`Show ${label} categories`} onClick={() => setOpen((value) => !value)} onKeyDown={(event) => { if (event.key === "ArrowDown") { event.preventDefault(); setOpen(true); focusFirstItem(); } }} className="grid size-8 place-items-center rounded-md text-[#667085] outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><ChevronDown className={`size-3.5 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`} aria-hidden="true" /></button>
-      </div>
-
-      <div ref={panel} id={menuId} role="menu" aria-label={`${label} categories`} className={`absolute top-full z-50 ${wide ? "left-0 w-[min(760px,calc(100vw-48px))]" : "left-1/2 w-[min(540px,calc(100vw-48px))] -translate-x-1/2"} rounded-b-2xl border border-[#E7DDD2] bg-[#FFFDF9] p-5 shadow-[0_18px_44px_rgba(11,31,51,0.12)] transition-[opacity,visibility] duration-200 motion-reduce:transition-none ${open ? "visible opacity-100" : "invisible opacity-0"}`}>
-        <div className={`grid ${wide ? "grid-cols-[210px_1fr]" : "grid-cols-[180px_1fr]"} gap-5`}>
-          <div className="rounded-xl bg-[#F3E8DA]/65 p-5">
-            <span className="grid size-10 place-items-center rounded-lg border border-[#D96B2B]/20 bg-white text-[#D96B2B]" aria-hidden="true"><Package className="size-5" /></span>
-            <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.17em] text-[#D96B2B]">Explore {label}</p>
-            <p className="mt-2 font-serif text-[25px] leading-[1.12] tracking-[-0.025em] text-[#0B1F33]">{intro}</p>
-            <Link href={href} role="menuitem" onClick={() => setOpen(false)} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#D96B2B] outline-none transition-colors hover:text-[#BC5420] focus-visible:ring-2 focus-visible:ring-[#D96B2B]">View all <ArrowRight className="size-4" aria-hidden="true" /></Link>
+    <nav aria-label="Main navigation" className="hidden h-full items-center justify-center min-[1160px]:flex">
+      {navMenus.map((menu) => {
+        const isOpen = openMenu === menu.label;
+        return (
+          <div
+            key={menu.label}
+            className="relative flex h-full items-center"
+            onMouseEnter={() => onOpen(menu.label)}
+          >
+            <Link
+              href={menu.href}
+              className={`flex h-full items-center rounded-sm pl-2.5 pr-0.5 text-[13px] font-semibold outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#D96B2B] ${isOpen ? "text-[#D96B2B]" : "text-[#344054] hover:text-[#D96B2B]"}`}
+            >
+              {menu.label}
+            </Link>
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              aria-haspopup="menu"
+              aria-label={`${isOpen ? "Hide" : "Show"} ${menu.label} categories`}
+              onClick={() => onOpen(menu.label)}
+              className={`grid size-8 place-items-center rounded-md outline-none transition-colors duration-200 hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B] ${isOpen ? "text-[#D96B2B]" : "text-[#667085]"}`}
+            >
+              <ChevronDown className={`size-3.5 transition-transform duration-300 ease-out motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
           </div>
-          <div className="grid grid-cols-2 content-start gap-2">
-            {items.map((item) => (
-              <Link key={item.href} href={item.href} role="menuitem" onClick={() => setOpen(false)} className="min-h-[76px] rounded-xl border border-transparent bg-white p-3.5 outline-none transition-colors hover:border-[#D96B2B]/30 hover:bg-[#FFF9F2] focus-visible:border-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]">
-                <span className="block text-sm font-bold text-[#0B1F33]">{item.label}</span>
-                {item.description ? <span className="mt-1 block text-xs leading-5 text-[#667085]">{item.description}</span> : null}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+        );
+      })}
+      {directLinks.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          onMouseEnter={onClose}
+          onFocus={onClose}
+          className="flex h-full items-center rounded-sm px-2.5 text-[13px] font-semibold text-[#344054] outline-none transition-colors duration-200 hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
-export function MegaMenu() {
-  return <NavDropdown label="Custom Boxes" href="/custom-boxes" items={productItems} intro="Made around your product." wide />;
+export function MegaPanel({
+  openMenu,
+  onClose,
+  onStay,
+  onLeave,
+}: {
+  openMenu: string | null;
+  onClose: () => void;
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  const menuId = useId();
+  const menu = navMenus.find((item) => item.label === openMenu) ?? null;
+  const open = Boolean(menu);
+  const [mounted, setMounted] = useState(false);
+  const [visibleMenu, setVisibleMenu] = useState<NavMenu | null>(null);
+  const [box, setBox] = useState({ top: 0, left: 24, width: 0 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (menu) setVisibleMenu(menu);
+  }, [menu]);
+
+  useEffect(() => {
+    function update() {
+      const header = document.querySelector("header");
+      const inner = header?.querySelector(":scope > .relative") as HTMLElement | null;
+      if (!header) return;
+      const headerRect = header.getBoundingClientRect();
+      const innerRect = inner?.getBoundingClientRect() ?? headerRect;
+      setBox({ top: headerRect.bottom - 8, left: innerRect.left, width: innerRect.width });
+    }
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, [open]);
+
+  const shown = menu ?? visibleMenu;
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      id="desktop-mega-panel"
+      data-menu-id={menuId}
+      role="menu"
+      aria-label={shown ? `${shown.label} categories` : undefined}
+      aria-hidden={!open}
+      {...(!open ? { inert: true } : {})}
+      onMouseEnter={onStay}
+      onMouseLeave={onLeave}
+      onPointerDown={(event) => event.stopPropagation()}
+      style={{ top: box.top, left: box.left, width: box.width || undefined }}
+      className={`fixed z-[400] origin-top bg-[#FFFDF9] pt-2 transition-[opacity,transform,visibility] duration-200 ease-out motion-reduce:transition-none ${open ? "visible translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-2 opacity-0"}`}
+    >
+      {shown ? (
+        <div className="overflow-hidden rounded-2xl border border-[#E7DDD2] bg-[#FFFDF9] p-5 shadow-[0_22px_50px_rgba(11,31,51,0.16)] sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[220px_1fr] lg:gap-7">
+            <div className="rounded-xl bg-[#F3E8DA] p-5">
+              <span className="grid size-10 place-items-center rounded-lg border border-[#D96B2B]/20 bg-white text-[#D96B2B]" aria-hidden="true">
+                <Package className="size-5" />
+              </span>
+              <p className="mt-4 text-[11px] font-extrabold uppercase tracking-[0.17em] text-[#D96B2B]">Explore {shown.label}</p>
+              <p className="mt-2 font-serif text-[26px] leading-[1.12] tracking-[-0.025em] text-[#0B1F33]">{shown.intro}</p>
+              <Link
+                href={shown.href}
+                role="menuitem"
+                onClick={onClose}
+                className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#D96B2B] outline-none transition-colors hover:text-[#BC5420] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"
+              >
+                View all <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className={`grid content-start gap-2 sm:grid-cols-2 ${shown.items.length > 4 ? "xl:grid-cols-3" : ""}`}>
+              {shown.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  role="menuitem"
+                  onClick={onClose}
+                  className="flex min-h-[76px] items-center gap-3 rounded-xl border border-[#E7DDD2]/80 bg-white p-3 outline-none transition-colors duration-200 hover:border-[#D96B2B]/30 hover:bg-[#FFF9F2] focus-visible:border-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"
+                >
+                  {item.image ? (
+                    <span className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-[#F3E8DA]">
+                      <Image src={item.image} alt="" fill sizes="56px" className="object-cover" />
+                    </span>
+                  ) : null}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-[#0B1F33]">{item.label}</span>
+                    {item.description ? <span className="mt-1 block text-xs leading-5 text-[#667085]">{item.description}</span> : null}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>,
+    document.body,
+  );
 }
