@@ -6,6 +6,7 @@ import { QuoteForm, QuoteSidebar } from "@/components/QuoteForm";
 import { Accordion } from "@/components/Accordion";
 import { Container } from "@/components/shared/Container";
 import { quoteFaq } from "@/data/faq";
+import { getFaqs, getPageContent, getProducts } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Get a Custom Packaging Quote",
@@ -19,7 +20,8 @@ const perks = [
   [Headset, "Design support included"],
 ] as const;
 
-export default function QuotePage() {
+export default async function QuotePage() {
+  const [products, faqs, content] = await Promise.all([getProducts(), getFaqs("quote"), getPageContent("get-a-quote")]);
   return (
     <>
       <section className="bg-[#FFF9F2] py-10 sm:py-12 lg:py-14">
@@ -30,9 +32,9 @@ export default function QuotePage() {
               <span>/</span>
               <b className="text-[#0B1F33]">Get a quote</b>
             </div>
-            <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Built around your product</p>
-            <h1 className="max-w-[640px] font-serif text-[clamp(2.35rem,4.6vw,3.7rem)] leading-[1.04] tracking-[-0.04em] text-[#0B1F33]">Tell us about your packaging.</h1>
-            <p className="mt-5 max-w-[540px] text-base leading-7 text-[#667085]">Share what you know — skip the rest. Quotes are free, and a specialist usually replies within one business day.</p>
+            <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">{content.quote_eyebrow || "Built around your product"}</p>
+            <h1 className="max-w-[640px] font-serif text-[clamp(2.35rem,4.6vw,3.7rem)] leading-[1.04] tracking-[-0.04em] text-[#0B1F33]">{content.quote_title || "Tell us about your packaging."}</h1>
+            <p className="mt-5 max-w-[540px] text-base leading-7 text-[#667085]">{content.quote_intro || "Share what you know — skip the rest. Quotes are free, and a specialist usually replies within one business day."}</p>
             <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
               {perks.map(([Icon, label]) => (
                 <li key={label} className="flex items-center gap-2.5 text-[13px] font-bold text-[#0B1F33]">
@@ -50,16 +52,16 @@ export default function QuotePage() {
 
       <section className="bg-[#FFFDF9] py-10 sm:py-12 lg:py-16">
         <Container className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
-          <QuoteForm />
+          <QuoteForm products={products} />
           <QuoteSidebar />
         </Container>
       </section>
 
       <section className="bg-[#FFF9F2] py-14 sm:py-16">
         <Container className="max-w-[860px]">
-          <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Before you send</p>
-          <h2 className="mb-6 font-serif text-[clamp(2rem,4vw,2.8rem)] text-[#0B1F33]">Quote questions, answered.</h2>
-          <Accordion items={quoteFaq} />
+          <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">{content.quote_faq_eyebrow || "Before you send"}</p>
+          <h2 className="mb-6 font-serif text-[clamp(2rem,4vw,2.8rem)] text-[#0B1F33]">{content.quote_faq_title || "Quote questions, answered."}</h2>
+          <Accordion items={faqs.length ? faqs : quoteFaq} />
         </Container>
       </section>
     </>

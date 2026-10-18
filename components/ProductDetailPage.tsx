@@ -8,9 +8,10 @@ import { Accordion } from "./Accordion";
 import { ProductCard } from "./ProductCard";
 import { Container } from "./shared/Container";
 import { Button } from "./shared/Button";
+import type { CmsFaq, CmsProduct } from "@/types/cms";
 
-export function ProductDetailPage({ product }: { product: Product }) {
-  const related = homeProducts.filter((item) => item.slug !== product.slug).slice(0, 3);
+export function ProductDetailPage({ product, products = homeProducts, faqs = homeFaq }: { product: Product; products?: CmsProduct[]; faqs?: CmsFaq[] }) {
+  const related = products.filter((item) => item.slug !== product.slug).slice(0, 3);
 
   return (
     <>
@@ -83,7 +84,7 @@ export function ProductDetailPage({ product }: { product: Product }) {
       <section className="bg-white py-14 sm:py-16">
         <Container className="max-w-[860px]">
           <h2 className="mb-6 font-serif text-[clamp(2rem,4vw,2.8rem)] text-[#0B1F33]">Frequently asked questions</h2>
-          <Accordion items={homeFaq} />
+          <Accordion items={faqs} />
         </Container>
       </section>
       <section className="bg-white pb-14">

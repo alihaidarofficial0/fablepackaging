@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import { Accordion } from "./Accordion";
-import { homeFaq } from "@/data/faq";
 import { Container } from "./shared/Container";
 
-export function FAQ() {
+export function FAQ({ items }: { items: { question: string; answer: string }[] }) {
   return (
     <section id="faq" className="bg-[#FFF9F2] py-14 sm:py-16 lg:py-20">
       <Container>
@@ -18,7 +17,7 @@ export function FAQ() {
               <Image src="/images/home/faq-packaging.webp" alt="Premium custom packaging boxes styled in a warm editorial studio" fill sizes="(max-width: 1023px) 100vw, 42vw" className="object-cover" />
             </div>
           </div>
-          <Accordion items={homeFaq} />
+          <Accordion items={items} />
         </div>
       </Container>
     </section>

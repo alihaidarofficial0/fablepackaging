@@ -15,6 +15,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { homeProducts } from "@/data/products";
+import type { CmsProduct } from "@/types/cms";
 
 const STEPS = ["Packaging", "Specs", "Details", "Review"] as const;
 
@@ -80,10 +81,10 @@ function mapQuantity(value: string) {
   return "10,000+";
 }
 
-function mapPackaging(value: string) {
+function mapPackaging(value: string, products: CmsProduct[]) {
   if (!value) return "";
   const needle = value.toLowerCase().trim();
-  return homeProducts.find((product) => {
+  return products.find((product) => {
     const name = product.name.toLowerCase();
     return name === needle || name.includes(needle) || needle.includes(name.replace(/s$/, ""));
   })?.name || value;
@@ -126,13 +127,16 @@ function Pill({
   );
 }
 
-export function QuoteForm() {
+export function QuoteForm({ products = homeProducts }: { products?: CmsProduct[] }) {
   const [step, setStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [data, setData] = useState<QuoteData>(empty);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const [artworkFile, setArtworkFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [reference, setReference] = useState("");
   const formId = useId();
 
   useEffect(() => {
@@ -155,7 +159,7 @@ export function QuoteForm() {
         const dims = parseDimensions(starter.dimensions || "");
         next = {
           ...next,
-          packaging: mapPackaging(starter.packaging || next.packaging),
+          packaging: mapPackaging(starter.packaging || next.packaging, products),
           quantity: mapQuantity(starter.quantity || next.quantity),
           material: starter.material && starter.material !== "Not sure yet" ? starter.material : next.material,
           printing: starter.printing || next.printing,
@@ -172,7 +176,7 @@ export function QuoteForm() {
     setStep(nextStep);
     setMaxStep(Math.max(nextMax, nextStep));
     setReady(true);
-  }, []);
+  }, [products]);
 
   useEffect(() => {
     if (!ready || done) return;
@@ -231,16 +235,32 @@ export function QuoteForm() {
     });
   }
 
-  function submit() {
+  async function submit() {
     const message = validate(2);
     if (message) {
       setError(message);
       setStep(2);
       return;
     }
-    sessionStorage.removeItem("fable-quote-draft");
-    sessionStorage.removeItem("fable-quote-starter");
-    setDone(true);
+    setSubmitting(true);
+    setError("");
+    const body = new FormData();
+    Object.entries(data).forEach(([key, value]) => body.set(key, key === "finishes" ? JSON.stringify(value) : String(value)));
+    body.set("website", "");
+    if (artworkFile) body.set("file", artworkFile);
+    try {
+      const response = await fetch("/api/quote", { method: "POST", body });
+      const result = await response.json() as { error?: string; reference?: string };
+      if (!response.ok) throw new Error(result.error || "Your request could not be submitted.");
+      sessionStorage.removeItem("fable-quote-draft");
+      sessionStorage.removeItem("fable-quote-starter");
+      setReference(result.reference || "");
+      setDone(true);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Your request could not be submitted.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const progress = ((step + 1) / STEPS.length) * 100;
@@ -260,6 +280,7 @@ export function QuoteForm() {
         <p className="mt-6 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Request received</p>
         <h2 className="mt-3 font-serif text-[clamp(2rem,4vw,2.8rem)] leading-[1.08] text-[#0B1F33]">Your project is in good hands.</h2>
         <p className="mx-auto mt-4 max-w-md text-base leading-7 text-[#667085]">A packaging specialist will review the details and reply within one business day — usually with sizing advice, pricing and next steps.</p>
+        {reference ? <p className="mx-auto mt-4 w-fit rounded-full bg-[#FFF4EC] px-4 py-2 text-sm font-bold text-[#D96B2B]">Reference: {reference}</p> : null}
         <ul className="mx-auto mt-8 max-w-sm space-y-3 text-left text-sm font-bold text-[#0B1F33]">
           {["We’ll confirm structure and materials", "You’ll get a clear quote and timeline", "Artwork and proofs come after you approve"].map((item) => (
             <li key={item} className="flex items-center gap-3">
@@ -322,7 +343,7 @@ export function QuoteForm() {
         {step === 0 ? (
           <div className="mt-6">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {homeProducts.map((product) => {
+              {products.map((product) => {
                 const selected = data.packaging === product.name;
                 return (
                   <button
@@ -468,7 +489,7 @@ export function QuoteForm() {
                   type="file"
                   accept=".pdf,.ai,.eps,.zip,image/*"
                   className="absolute inset-0 cursor-pointer opacity-0"
-                  onChange={(event) => update("fileName", event.target.files?.[0]?.name || "")}
+                  onChange={(event) => { const file = event.target.files?.[0] || null; setArtworkFile(file); update("fileName", file?.name || ""); }}
                 />
               </label>
             ) : null}
@@ -527,10 +548,11 @@ export function QuoteForm() {
         </button>
         <button
           type="button"
-          onClick={() => (step === 3 ? submit() : next())}
+          disabled={submitting}
+          onClick={() => (step === 3 ? void submit() : next())}
           className="inline-flex h-[50px] items-center justify-center gap-2 rounded-[9px] border border-[#D96B2B] bg-[#D96B2B] px-6 text-sm font-extrabold text-white transition-colors hover:border-[#BC5420] hover:bg-[#BC5420]"
         >
-          {step === 3 ? "Submit quote" : "Continue"} <ArrowRight className="size-4" />
+          {submitting ? "Submitting…" : step === 3 ? "Submit quote" : "Continue"} <ArrowRight className="size-4" />
         </button>
       </div>
     </div>

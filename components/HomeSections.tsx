@@ -22,7 +22,7 @@ import { Container } from "./shared/Container";
 import { Button } from "./shared/Button";
 import { SectionHeading } from "./shared/SectionHeading";
 
-export function Hero() {
+export function Hero({ content = {} }: { content?: Record<string, string> }) {
   const benefits = [[Sparkles, "Free design support"], [Box, "Low minimums"], [Truck, "Fast turnaround"]] as const;
 
   return (
@@ -31,10 +31,10 @@ export function Hero() {
       <div className="absolute inset-0 -z-0 bg-[linear-gradient(90deg,rgba(255,249,242,0.99)_0%,rgba(255,249,242,0.96)_27%,rgba(255,249,242,0.68)_48%,rgba(255,249,242,0.08)_76%)] lg:bg-[linear-gradient(90deg,rgba(255,249,242,0.99)_0%,rgba(255,249,242,0.94)_28%,rgba(255,249,242,0.45)_49%,rgba(255,249,242,0)_76%)]" />
       <Container className="relative z-10 grid min-h-[720px] items-center py-16 lg:min-h-[680px] lg:grid-cols-[46fr_54fr] lg:py-[72px]">
         <div className="max-w-[580px]">
-          <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Custom packaging, made memorable</p>
-          <h1 className="max-w-[540px] font-serif text-[clamp(2.65rem,5vw,4.6rem)] leading-[0.99] tracking-[-0.045em] text-[#0B1F33]">Packaging that<br className="hidden sm:block" /> elevates <span className="text-[#D96B2B]">your brand.</span></h1>
-          <p className="mt-6 max-w-[520px] text-base leading-[1.65] text-[#526071] lg:text-lg">Custom boxes, endless possibilities. Thoughtful packaging solutions designed to protect your products, reflect your brand, and make every unboxing count.</p>
-          <div className="mt-8 grid max-w-[430px] gap-3 sm:flex [&>a]:w-full sm:[&>a]:w-auto"><Button href="/get-a-quote">Get a custom quote</Button><Button href="#products" variant="secondary">Explore products</Button></div>
+          <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">{content.hero_eyebrow || "Custom packaging, made memorable"}</p>
+          <h1 className="max-w-[560px] font-serif text-[clamp(2.65rem,5vw,4.6rem)] leading-[0.99] tracking-[-0.045em] text-[#0B1F33]">{content.hero_title || "Packaging that elevates your brand."}</h1>
+          <p className="mt-6 max-w-[520px] text-base leading-[1.65] text-[#526071] lg:text-lg">{content.hero_body || "Custom boxes, endless possibilities. Thoughtful packaging solutions designed to protect your products, reflect your brand, and make every unboxing count."}</p>
+          <div className="mt-8 grid max-w-[430px] gap-3 sm:flex [&>a]:w-full sm:[&>a]:w-auto"><Button href="/get-a-quote">Get a custom quote</Button><Button href="/custom-boxes" variant="secondary">Explore products</Button></div>
           <div className="mt-7 flex max-w-[520px] flex-wrap gap-x-5 gap-y-3 border-t border-[#0B1F33]/10 pt-5">{benefits.map(([Icon, label]) => <span key={label} className="flex min-h-8 items-center gap-2 text-[12px] font-bold text-[#0B1F33]"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F3E8DA] text-[#D96B2B]"><Icon className="size-4" aria-hidden="true" /></span>{label}</span>)}</div>
         </div>
       </Container>
@@ -68,7 +68,7 @@ export function TrustSection() {
   );
 }
 
-export function WhyFable() {
+export function WhyFable({ content = {} }: { content?: Record<string, string> }) {
   const checklist = ["100% customizable", "Premium materials & finishes", "Free design support", "Sustainable options", "Global shipping"];
   const features = [
     [Ruler, "Custom sizes & styles", "Built around your product."],
@@ -82,9 +82,9 @@ export function WhyFable() {
     <section id="why-fable" className="bg-[linear-gradient(135deg,#FFF9F2_0%,#FFF9F2_55%,#F8EDE1_100%)] py-14 sm:py-16 lg:py-20">
       <Container className="grid gap-10 md:grid-cols-2 md:items-center lg:grid-cols-[32fr_43fr_25fr] lg:gap-8 xl:gap-10">
         <div>
-          <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Why Fable</p>
-          <h2 className="max-w-[430px] font-serif text-[clamp(2.5rem,4vw,3.7rem)] leading-[1.01] tracking-[-0.04em] text-[#0B1F33]">Great packaging should feel simple.</h2>
-          <p className="mt-5 max-w-[460px] text-base leading-[1.7] text-[#667085]">From first sketch to final delivery, our packaging experts bring structure, clarity and craft to every project — so you can focus on growing your brand.</p>
+          <p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">{content.why_eyebrow || "Why Fable"}</p>
+          <h2 className="max-w-[430px] font-serif text-[clamp(2.5rem,4vw,3.7rem)] leading-[1.01] tracking-[-0.04em] text-[#0B1F33]">{content.why_title || "Great packaging should feel simple."}</h2>
+          <p className="mt-5 max-w-[460px] text-base leading-[1.7] text-[#667085]">{content.why_body || "From first sketch to final delivery, our packaging experts bring structure, clarity and craft to every project — so you can focus on growing your brand."}</p>
           <ul className="my-7 space-y-3" aria-label="Why choose Fable Packaging">
             {checklist.map((item) => <li key={item} className="flex items-center gap-3 text-sm font-bold text-[#111827]"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-[#D96B2B] text-white" aria-hidden="true"><Check className="size-3" strokeWidth={3} /></span>{item}</li>)}
           </ul>
@@ -111,7 +111,7 @@ export function WhyFable() {
   );
 }
 
-export function MaterialsSection() {
+export function MaterialsSection({ content = {} }: { content?: Record<string, string> }) {
   const materials = [
     ["Kraft Paper", "Natural, tactile and direct", "/images/products/shipping-box.webp"],
     ["Premium Paperboard", "Smooth, crisp and versatile", "/images/products/mailer-box.webp"],
@@ -122,7 +122,7 @@ export function MaterialsSection() {
   return (
     <section id="materials" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
-        <SectionHeading eyebrow="Make it distinctly yours" title="Materials and finishes that make an impression." copy="From natural kraft textures to soft-touch finishes and metallic foils, choose the details that make your packaging unmistakably yours." />
+        <SectionHeading eyebrow={content.materials_eyebrow || "Make it distinctly yours"} title={content.materials_title || "Materials and finishes that make an impression."} copy={content.materials_body || "From natural kraft textures to soft-touch finishes and metallic foils, choose the details that make your packaging unmistakably yours."} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {materials.map(([name, copy, image]) => (
             <Link key={name} href="/materials" className="overflow-hidden rounded-[14px] border border-[#E7DDD2] bg-[#FFF9F2] outline-none transition-colors hover:border-[#D96B2B]/65 focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">
@@ -140,15 +140,15 @@ export function MaterialsSection() {
   );
 }
 
-export function SustainabilitySection() {
+export function SustainabilitySection({ content = {} }: { content?: Record<string, string> }) {
   const benefits = [[Recycle, "Recyclable materials"], [Palette, "Soy-based inks"], [ShieldCheck, "FSC® options"], [Leaf, "Plastic-free choices"], [Earth, "Lower-impact shipping"]] as const;
   return (
     <section id="sustainability" className="overflow-hidden bg-[radial-gradient(circle_at_64%_45%,#17443d,#071827_70%)] py-14 text-white sm:py-16 lg:py-20">
       <Container className="grid items-center gap-10 lg:grid-cols-[1fr_.9fr_.68fr] lg:gap-12">
         <div>
-          <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#E6AD65]">Packaging with a lighter footprint</p>
-          <h2 className="font-serif text-[clamp(2.5rem,4vw,3.65rem)] leading-[1.02] tracking-[-0.035em] text-white">A better box for a brighter tomorrow.</h2>
-          <p className="mt-5 max-w-xl text-base leading-7 text-white/72">Make confident material choices without compromising the experience. Our team helps you reduce waste at every step.</p>
+          <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#E6AD65]">{content.sustainability_eyebrow || "Packaging with a lighter footprint"}</p>
+          <h2 className="font-serif text-[clamp(2.5rem,4vw,3.65rem)] leading-[1.02] tracking-[-0.035em] text-white">{content.sustainability_title || "A better box for a brighter tomorrow."}</h2>
+          <p className="mt-5 max-w-xl text-base leading-7 text-white/72">{content.sustainability_body || "Make confident material choices without compromising the experience. Our team helps you reduce waste at every step."}</p>
           <div className="mt-7"><Button href="/sustainability" variant="light">Explore sustainable options</Button></div>
         </div>
         <div className="relative aspect-[4/3] overflow-hidden rounded-[16px] border border-white/10 bg-[#122F32]">
@@ -162,7 +162,7 @@ export function SustainabilitySection() {
   );
 }
 
-export function ProcessSection() {
+export function ProcessSection({ content = {} }: { content?: Record<string, string> }) {
   const steps = [
     [Box, "Choose your style", "Start with a structure built for your product."],
     [PencilRuler, "Make it yours", "Pick dimensions, materials, print and finishes."],
@@ -172,7 +172,7 @@ export function ProcessSection() {
   return (
     <section id="how-it-works" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
-        <div className="mb-12 text-center"><p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">A clear path forward</p><h2 className="font-serif text-[clamp(2.5rem,4vw,3.5rem)] leading-none text-[#0B1F33]">How it works</h2><p className="mt-4 text-base text-[#667085]">Four simple steps from idea to delivery.</p></div>
+        <div className="mb-12 text-center"><p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">{content.process_eyebrow || "A clear path forward"}</p><h2 className="font-serif text-[clamp(2.5rem,4vw,3.5rem)] leading-none text-[#0B1F33]">{content.process_title || "How it works"}</h2><p className="mt-4 text-base text-[#667085]">{content.process_body || "Four simple steps from idea to delivery."}</p></div>
         <div className="relative grid gap-5 md:grid-cols-4 md:gap-7 before:absolute before:left-[10%] before:right-[10%] before:top-10 before:hidden before:border-t before:border-dashed before:border-[#D96B2B]/35 md:before:block">
           {steps.map(([Icon, title, copy], index) => (
             <article key={title} className="relative grid grid-cols-[72px_1fr] items-center gap-4 rounded-[14px] border border-[#E7DDD2] bg-[#FFF9F2] p-4 md:block md:min-h-[250px] md:border-transparent md:bg-transparent md:p-0 md:text-center">
@@ -186,17 +186,17 @@ export function ProcessSection() {
   );
 }
 
-export function Testimonial() {
+export function Testimonial({ content = {} }: { content?: Record<string, string> }) {
   return (
     <section aria-labelledby="customer-proof-heading" className="bg-white py-14 sm:py-16 lg:py-20">
       <Container>
         <article className="grid min-h-[340px] overflow-hidden rounded-[18px] border border-[#E7DDD2] bg-[linear-gradient(135deg,#FFF9F2,#F3E8DA)] lg:grid-cols-[1.25fr_.75fr]">
           <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
             <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#D96B2B]">Customer proof</p>
-            <h2 id="customer-proof-heading" className="font-serif text-[clamp(2.2rem,4vw,3.35rem)] leading-[1.08] tracking-[-0.035em] text-[#0B1F33]">Packaging partnership, without the complexity.</h2>
+            <h2 id="customer-proof-heading" className="font-serif text-[clamp(2.2rem,4vw,3.35rem)] leading-[1.08] tracking-[-0.035em] text-[#0B1F33]">{content.testimonial_title || "Packaging partnership, without the complexity."}</h2>
             <div className="mt-6 tracking-[0.12em] text-[#C99A4A]" aria-label="5 out of 5 stars">★★★★★</div>
-            <blockquote className="mt-4 max-w-3xl font-serif text-[clamp(1.25rem,2.1vw,1.75rem)] leading-[1.5] text-[#26384B]">“Fable made a complex launch feel effortless. The samples were beautiful, communication was clear, and the finished boxes exceeded every expectation.”</blockquote>
-            <div className="mt-7 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-[#0B1F33] text-sm font-extrabold text-white">SK</span><p><b className="block text-sm text-[#0B1F33]">Sarah Kim</b><span className="block text-sm text-[#667085]">Founder, PureGlow</span></p></div>
+            <blockquote className="mt-4 max-w-3xl font-serif text-[clamp(1.25rem,2.1vw,1.75rem)] leading-[1.5] text-[#26384B]">“{content.testimonial_quote || "Fable made a complex launch feel effortless. The samples were beautiful, communication was clear, and the finished boxes exceeded every expectation."}”</blockquote>
+            <div className="mt-7 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-[#0B1F33] text-sm font-extrabold text-white">{content.testimonial_initials || "SK"}</span><p><b className="block text-sm text-[#0B1F33]">{content.testimonial_name || "Sarah Kim"}</b><span className="block text-sm text-[#667085]">{content.testimonial_role || "Founder, PureGlow"}</span></p></div>
           </div>
           <div className="relative hidden min-h-[340px] items-center justify-center border-l border-[#E7DDD2] bg-[#0B1F33] lg:flex"><Quote className="size-32 text-[#C99A4A]/55" strokeWidth={1} aria-hidden="true" /><div className="absolute inset-x-10 bottom-10 text-center text-sm leading-6 text-white/65">Clear guidance.<br />Beautifully finished packaging.</div></div>
         </article>
@@ -205,13 +205,13 @@ export function Testimonial() {
   );
 }
 
-export function FinalCTA() {
+export function FinalCTA({ content = {} }: { content?: Record<string, string> }) {
   return (
     <section className="bg-white pb-12 sm:pb-14 lg:pb-16">
       <Container>
         <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(110deg,#071827_0%,#0B1F33_58%,#123148_100%)] px-7 py-9 text-white sm:px-10 sm:py-11 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-16 lg:py-16">
           <Box className="pointer-events-none absolute -right-9 -top-10 size-52 text-[#8CAFC5]/10" strokeWidth={1} aria-hidden="true" />
-          <div className="relative max-w-3xl"><p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#E6AD65]">Ready when you are</p><h2 className="font-serif text-[clamp(2.35rem,4vw,3.6rem)] leading-[1.05] tracking-[-0.035em] text-white">Let’s create packaging worth opening.</h2><p className="mt-4 text-base text-white/70">Tell us what you’re making. We’ll help shape the rest.</p></div>
+          <div className="relative max-w-3xl"><p className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.18em] text-[#E6AD65]">{content.cta_eyebrow || "Ready when you are"}</p><h2 className="font-serif text-[clamp(2.35rem,4vw,3.6rem)] leading-[1.05] tracking-[-0.035em] text-white">{content.cta_title || "Let’s create packaging worth opening."}</h2><p className="mt-4 text-base text-white/70">{content.cta_body || "Tell us what you’re making. We’ll help shape the rest."}</p></div>
           <div className="relative mt-8 flex w-full shrink-0 flex-col gap-3 sm:flex-row lg:mt-0 lg:w-auto"><Button href="/get-a-quote" variant="light">Get a free quote</Button><Link href="/contact" className="flex h-[52px] w-full items-center justify-center rounded-[10px] border border-white/45 bg-transparent px-7 text-sm font-semibold text-white outline-none transition-colors hover:border-white/80 hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#0B1F33] sm:w-auto">Talk to an expert</Link></div>
         </div>
       </Container>

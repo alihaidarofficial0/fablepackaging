@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import "@fontsource-variable/inter/wght.css";
+import "@fontsource-variable/fraunces/wght.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
+import { PublicChrome } from "@/components/PublicChrome";
+import { getCatalogItems, getIndustries, getNavigationItems, getProducts, getSiteSettings } from "@/lib/content";
+import { getAdmin } from "@/lib/auth";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fablepack.co"),
@@ -22,14 +14,18 @@ export const metadata: Metadata = {
   description: "Premium custom packaging with low minimums, expert design support and worldwide delivery.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [settings, products, industries, catalog, navigation, admin] = await Promise.all([getSiteSettings(), getProducts(), getIndustries(), getCatalogItems(), getNavigationItems(), getAdmin()]);
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="font-sans antialiased" suppressHydrationWarning>
         <a className="skip-link" href="#main">Skip to content</a>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
+        <PublicChrome
+          header={<Header settings={settings} products={products} industries={industries} catalog={catalog} navigation={navigation} admin={admin ? { email: admin.email, role: admin.role } : null} />}
+          footer={<Footer settings={settings} products={products} navigation={navigation} />}
+        >
+          {children}
+        </PublicChrome>
       </body>
     </html>
   );

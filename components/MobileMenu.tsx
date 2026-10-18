@@ -1,20 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Menu, Search, X } from "lucide-react";
+import { ArrowRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Search, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { navMenus } from "./MegaMenu";
+import { navMenus, type NavMenu } from "./MegaMenu";
+import type { HeaderAdmin } from "./AccountMenu";
+import { logoutAction } from "@/app/admin/actions";
 
-const groups = navMenus.map((menu) => ({
-  label: menu.label,
-  href: menu.href,
-  items: menu.items.map((item) => [item.label, item.href] as const),
-}));
+const defaultDirectLinks = [["About", "/about"], ["Blog", "/blog"]] as const;
 
-const directLinks = [["About", "/about"], ["Blog", "/blog"]] as const;
-
-export function MobileMenu() {
+export function MobileMenu({ menus = navMenus, directItems = defaultDirectLinks, admin = null, onSearch }: { menus?: NavMenu[]; directItems?: ReadonlyArray<readonly [string, string]>; admin?: HeaderAdmin; onSearch?: () => void }) {
+  const groups = menus.map((menu) => ({ label: menu.label, href: menu.href, items: menu.items.map((item) => [item.label, item.href] as const) }));
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -100,10 +97,29 @@ export function MobileMenu() {
           );
         })}
 
-        {directLinks.map(([label, href]) => (
+        {directItems.map(([label, href]) => (
           <Link key={href} href={href} onClick={closeMenu} className="flex min-h-14 items-center justify-between border-b border-[#E7DDD2] text-[15px] font-bold text-[#0B1F33] outline-none transition-colors hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D96B2B]">{label}<ArrowRight className="size-4 text-[#D96B2B]" aria-hidden="true" /></Link>
         ))}
 
+        <div className="mt-5 rounded-xl border border-[#E7DDD2] bg-white p-2">
+          {admin ? (
+            <>
+              <div className="px-3 py-2">
+                <p className="truncate text-sm font-bold text-[#0B1F33]">{admin.email}</p>
+                <p className="mt-0.5 text-xs capitalize text-[#667085]">{admin.role} account</p>
+              </div>
+              <Link href="/admin" onClick={closeMenu} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] hover:bg-[#F3E8DA] hover:text-[#D96B2B]"><LayoutDashboard className="size-4" aria-hidden="true" />Admin dashboard</Link>
+              <form action={logoutAction}>
+                <button type="submit" className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold text-[#344054] hover:bg-[#FDEDE4] hover:text-[#BC5420]"><LogOut className="size-4" aria-hidden="true" />Sign out</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/admin/login" onClick={closeMenu} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] hover:bg-[#F3E8DA] hover:text-[#D96B2B]"><LogIn className="size-4" aria-hidden="true" />Admin sign in</Link>
+              <Link href="/admin/signup" onClick={closeMenu} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] hover:bg-[#F3E8DA] hover:text-[#D96B2B]"><UserPlus className="size-4" aria-hidden="true" />Admin sign up</Link>
+            </>
+          )}
+        </div>
         <Link href="/get-a-quote" onClick={closeMenu} style={{ color: "#FFFFFF" }} className="mt-5 flex h-[50px] items-center justify-center gap-2 rounded-[10px] border border-[#D96B2B] bg-[#D96B2B] font-bold transition-colors hover:border-[#BC5420] hover:bg-[#BC5420] focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-4">Get a Quote <ArrowRight className="size-4" aria-hidden="true" /></Link>
       </nav>
     </>
@@ -111,7 +127,7 @@ export function MobileMenu() {
 
   return (
     <div ref={root} className="col-start-3 flex items-center justify-self-end gap-1 min-[1160px]:hidden">
-      <Link href="/search" aria-label="Search" className="grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><Search className="size-5" /></Link>
+      <button type="button" aria-label="Open search" aria-haspopup="dialog" onClick={() => { closeMenu(); onSearch?.(); }} className="grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><Search className="size-5" /></button>
       <button ref={menuButton} type="button" aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? "Close navigation" : "Open navigation"} onClick={() => setOpen((value) => !value)} className="grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]">{open ? <X className="size-6" /> : <Menu className="size-6" />}</button>
       {mounted && menu ? createPortal(menu, document.body) : null}
     </div>

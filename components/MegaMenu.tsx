@@ -7,6 +7,7 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { homeProducts } from "@/data/products";
 import { homeIndustries } from "@/data/industries";
+import type { CmsCatalogItem, CmsIndustry, CmsNavigationItem, CmsProduct } from "@/types/cms";
 
 export type MenuItem = { label: string; href: string; description?: string; image?: string };
 
@@ -17,12 +18,12 @@ export type NavMenu = {
   items: MenuItem[];
 };
 
-export const navMenus: NavMenu[] = [
+export function buildNavMenus(products: CmsProduct[] = homeProducts, industries: CmsIndustry[] = homeIndustries, catalog: CmsCatalogItem[] = [], navigation: CmsNavigationItem[] = []): NavMenu[] { return [
   {
     label: "Custom Boxes",
     href: "/custom-boxes",
     intro: "Made around your product.",
-    items: homeProducts.map((product) => ({
+    items: products.map((product) => ({
       label: product.name,
       href: `/custom-boxes/${product.slug}`,
       description: product.subtitle,
@@ -33,7 +34,7 @@ export const navMenus: NavMenu[] = [
     label: "Industries",
     href: "/industries",
     intro: "Packaging shaped around your sector.",
-    items: homeIndustries.map((industry) => ({
+    items: industries.map((industry) => ({
       label: industry.name,
       href: `/industries/${industry.slug}`,
       description: industry.description,
@@ -44,7 +45,7 @@ export const navMenus: NavMenu[] = [
     label: "Materials",
     href: "/materials",
     intro: "Details that make the difference.",
-    items: [
+    items: catalog.filter((item) => item.kind === "material").length ? catalog.filter((item) => item.kind === "material").map((item) => ({ label: item.name, href: `/materials/${item.slug}`, description: item.description, image: item.image })) : [
       { label: "Kraft Paper", href: "/materials/kraft-paper", description: "Natural, tactile and direct.", image: "/images/products/shipping-box.webp" },
       { label: "Premium Paperboard", href: "/materials/premium-paperboard", description: "Smooth, crisp and versatile.", image: "/images/products/mailer-box.webp" },
       { label: "Corrugated Board", href: "/materials/corrugated-board", description: "Protective strength for transit.", image: "/images/products/shipping-box.webp" },
@@ -55,14 +56,16 @@ export const navMenus: NavMenu[] = [
     label: "Design Support",
     href: "/design-support",
     intro: "Clarity from first sketch to final proof.",
-    items: [
+    items: navigation.filter((item) => item.location === "design_support").length ? navigation.filter((item) => item.location === "design_support").map((item) => ({ label: item.label, href: item.href, description: item.description, image: item.image })) : [
       { label: "Artwork Guidelines", href: "/artwork-guidelines", description: "Prepare artwork with confidence.", image: "/images/home/faq-packaging.webp" },
       { label: "Structural Design", href: "/design-support", description: "A structure made for your product.", image: "/images/products/display-box.webp" },
       { label: "Samples & Prototypes", href: "/samples", description: "Review form and finish before production.", image: "/images/products/folding-carton.webp" },
       { label: "Get Expert Help", href: "/contact", description: "Talk with a packaging specialist.", image: "/images/home/why-fable-packaging.webp" },
     ],
   },
-];
+]; }
+
+export const navMenus: NavMenu[] = buildNavMenus();
 
 const directLinks = [
   { label: "About", href: "/about" },
@@ -73,14 +76,18 @@ export function DesktopNav({
   openMenu,
   onOpen,
   onClose,
+  menus = navMenus,
+  directItems = directLinks,
 }: {
   openMenu: string | null;
   onOpen: (label: string) => void;
   onClose: () => void;
+  menus?: NavMenu[];
+  directItems?: ReadonlyArray<{ label: string; href: string }>;
 }) {
   return (
     <nav aria-label="Main navigation" className="hidden h-full items-center justify-center min-[1160px]:flex">
-      {navMenus.map((menu) => {
+      {menus.map((menu) => {
         const isOpen = openMenu === menu.label;
         return (
           <div
@@ -107,7 +114,7 @@ export function DesktopNav({
           </div>
         );
       })}
-      {directLinks.map((item) => (
+      {directItems.map((item) => (
         <Link
           key={item.href}
           href={item.href}
@@ -127,14 +134,16 @@ export function MegaPanel({
   onClose,
   onStay,
   onLeave,
+  menus = navMenus,
 }: {
   openMenu: string | null;
   onClose: () => void;
   onStay: () => void;
   onLeave: () => void;
+  menus?: NavMenu[];
 }) {
   const menuId = useId();
-  const menu = navMenus.find((item) => item.label === openMenu) ?? null;
+  const menu = menus.find((item) => item.label === openMenu) ?? null;
   const open = Boolean(menu);
   const [mounted, setMounted] = useState(false);
   const [visibleMenu, setVisibleMenu] = useState<NavMenu | null>(null);

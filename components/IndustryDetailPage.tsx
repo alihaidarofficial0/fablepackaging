@@ -7,8 +7,9 @@ import { Accordion } from "./Accordion";
 import { ProductCard } from "./ProductCard";
 import { Container } from "./shared/Container";
 import { Button } from "./shared/Button";
+import type { CmsFaq, CmsProduct } from "@/types/cms";
 
-export function IndustryDetailPage({ industry }: { industry: Industry }) {
+export function IndustryDetailPage({ industry, products = homeProducts, faqs = homeFaq }: { industry: Industry; products?: CmsProduct[]; faqs?: CmsFaq[] }) {
   return (
     <>
       <section className="bg-[#FFF9F2] py-10 sm:py-14">
@@ -35,14 +36,14 @@ export function IndustryDetailPage({ industry }: { industry: Industry }) {
         <Container>
           <h2 className="mb-8 font-serif text-[clamp(2rem,4vw,2.8rem)] text-[#0B1F33]">Popular {industry.name.toLowerCase()} packaging</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {homeProducts.slice(0, 3).map((product) => <ProductCard key={product.slug} product={product} />)}
+            {products.slice(0, 3).map((product) => <ProductCard key={product.slug} product={product} />)}
           </div>
         </Container>
       </section>
       <section className="bg-[#FFF9F2] py-14 sm:py-16">
         <Container className="max-w-[860px]">
           <h2 className="mb-6 font-serif text-[clamp(2rem,4vw,2.8rem)] text-[#0B1F33]">Frequently asked questions</h2>
-          <Accordion items={homeFaq} />
+          <Accordion items={faqs} />
         </Container>
       </section>
     </>
