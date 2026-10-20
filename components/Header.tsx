@@ -1,122 +1,233 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Leaf, Mail, PackageCheck, Phone, Search, ShoppingBag, Sparkles } from "lucide-react";
+import { Sparkles, Mail, Search, ArrowRight, Menu, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "./Logo";
-import { AccountMenu, type HeaderAdmin } from "./AccountMenu";
-import { buildNavMenus, DesktopNav, MegaPanel } from "./MegaMenu";
-import { MiniDropdown } from "./MiniDropdown";
-import { MobileMenu } from "./MobileMenu";
 import { SearchPopup, type SiteSearchItem } from "./SearchPopup";
 import type { SiteSettings } from "@/types/cms";
-import type { CmsCatalogItem, CmsIndustry, CmsNavigationItem, CmsProduct } from "@/types/cms";
+import type { HeaderAdmin } from "./AccountMenu";
 
-export function Header({ settings, products, industries, catalog, navigation, admin }: { settings: SiteSettings; products: CmsProduct[]; industries: CmsIndustry[]; catalog: CmsCatalogItem[]; navigation: CmsNavigationItem[]; admin: HeaderAdmin }) {
-  const menus = buildNavMenus(products, industries, catalog, navigation);
-  const directItems = navigation.filter((item) => item.location === "header_direct").map((item) => ({ label: item.label, href: item.href }));
-  const mobileDirectItems = directItems.map((item) => [item.label, item.href] as const);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+export function Header({
+  settings,
+  admin,
+}: {
+  settings: SiteSettings;
+  admin: HeaderAdmin;
+}) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const root = useRef<HTMLElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [topicsDropdownOpen, setTopicsDropdownOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
-  const searchItems = useMemo(() => {
-    const items: SiteSearchItem[] = [
-      { label: "All custom boxes", href: "/custom-boxes", category: "Products", description: "Browse every packaging format." },
-      { label: "All industries", href: "/industries", category: "Industries", description: "Packaging solutions by sector." },
-      { label: "Materials", href: "/materials", category: "Materials", description: "Explore packaging materials." },
-      { label: "Finishes", href: "/finishes", category: "Finishes", description: "Explore print and finishing options." },
-      { label: "Get a quote", href: "/get-a-quote", category: "Support", description: "Start your custom packaging project." },
-      { label: "Contact us", href: "/contact", category: "Support", description: "Talk to a packaging specialist." },
-      ...products.map((product) => ({ label: product.name, href: `/custom-boxes/${product.slug}`, category: "Product", description: product.subtitle })),
-      ...industries.map((industry) => ({ label: industry.name, href: `/industries/${industry.slug}`, category: "Industry", description: industry.description })),
-      ...catalog.map((item) => ({ label: item.name, href: `/${item.kind === "material" ? "materials" : "finishes"}/${item.slug}`, category: item.kind === "material" ? "Material" : "Finish", description: item.description })),
-      ...navigation.map((item) => ({ label: item.label, href: item.href, category: "Page", description: item.description })),
-    ];
 
-    return Array.from(new Map(items.map((item) => [item.href, item])).values());
-  }, [catalog, industries, navigation, products]);
+  const searchItems: SiteSearchItem[] = useMemo(() => [
+    { label: "All Journal Articles", href: "/blog", category: "Journal", description: "Browse the full collection of stories and guides." },
+    { label: "Box Styles & Structure", href: "/blog/category/box-styles-structural-design", category: "Topic", description: "Rigid boxes, custom mailers, and dielines." },
+    { label: "Materials & Substrates", href: "/blog/category/materials-substrates", category: "Topic", description: "Virgin kraft, fluted boards, and greyboard." },
+    { label: "Sustainable Packaging", href: "/blog/category/sustainable-packaging", category: "Topic", description: "Zero-plastic, circular lifecycles, and eco inks." },
+    { label: "Printing & Luxury Finishes", href: "/blog/category/printing-luxury-finishes", category: "Topic", description: "Foil stamping, debossing, and spot UV." },
+    { label: "E-Commerce & Unboxing", href: "/blog/category/ecommerce-unboxing", category: "Topic", description: "DTC shipping, branded reveals, and inserts." },
+    { label: "Prepress & Design Guides", href: "/blog/category/prepress-design-guides", category: "Topic", description: "Artwork checklists and bleed tolerances." },
+    { label: "About the Journal", href: "/about", category: "Publication", description: "Our editorial mission and philosophy." },
+    { label: "Reader Contact", href: "/contact", category: "Publication", description: "Get in touch with the editors." },
+  ], []);
 
-  function cancelClose() {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  }
-
-  function scheduleClose() {
-    cancelClose();
-    closeTimer.current = setTimeout(() => setOpenMenu(null), 280);
-  }
-
-  function open(label: string) {
-    cancelClose();
-    setOpenMenu(label);
-  }
-
-  function close() {
-    cancelClose();
-    setOpenMenu(null);
-  }
-
-  useEffect(() => {
-    function handlePointerDown(event: PointerEvent) {
-      const el = event.target instanceof Element ? event.target : (event.target as Node | null)?.parentElement;
-      if (!el) return;
-      if (root.current?.contains(el)) return;
-      if (el.closest("#desktop-mega-panel")) return;
-      close();
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") close();
-    }
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      cancelClose();
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
+  const topics = [
+    { name: "Box Styles & Structure", href: "/blog/category/box-styles-structural-design", desc: "Rigid boxes, mailers & dielines" },
+    { name: "Materials & Substrates", href: "/blog/category/materials-substrates", desc: "Kraft, corrugated & greyboard calipers" },
+    { name: "Sustainable Packaging", href: "/blog/category/sustainable-packaging", desc: "Zero-plastic & circular design" },
+    { name: "Printing & Finishes", href: "/blog/category/printing-luxury-finishes", desc: "Hot foil stamping, deboss & spot UV" },
+    { name: "E-Commerce & Unboxing", href: "/blog/category/ecommerce-unboxing", desc: "DTC shipping & branded reveals" },
+    { name: "Prepress Guides", href: "/blog/category/prepress-design-guides", desc: "Artwork prep & fold tolerances" },
+  ];
 
   return (
     <>
-      {settings.announcement_enabled !== false ? <div className="relative z-[60] hidden h-9 bg-[#0B1F33] text-white min-[1160px]:block">
+      {/* Announcement Bar */}
+      <div className="relative z-[60] hidden h-9 bg-[#0B1F33] text-white min-[1160px]:block">
         <div className="mx-auto flex h-full max-w-[1320px] items-center justify-between px-6 text-[11px] font-semibold">
-          <div className="flex items-center gap-5 xl:gap-7">
-            <span className="flex items-center gap-1.5"><Sparkles className="size-3.5 text-[#C99A4A]" aria-hidden="true" />{settings.announcement_item_1 || "Free design support"}</span>
-            <span className="flex items-center gap-1.5"><PackageCheck className="size-3.5 text-[#C99A4A]" aria-hidden="true" />{settings.announcement_item_2 || "Low minimum order"}</span>
-            <span className="hidden items-center gap-1.5 min-[1280px]:flex"><Leaf className="size-3.5 text-[#C99A4A]" aria-hidden="true" />{settings.announcement_item_3 || "Sustainable packaging"}</span>
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-1.5 text-white/80">
+              <Sparkles className="size-3.5 text-[#D96B2B]" />
+              Fable Journal — Exploring craftsmanship, structural design, and material culture.
+            </span>
           </div>
-          <div className="flex items-center gap-5 xl:gap-7">
-            <a href={`mailto:${settings.email}`} className="flex h-9 items-center gap-1.5 transition-colors hover:text-[#EBC57D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EBC57D]"><Mail className="size-3.5" aria-hidden="true" />{settings.email}</a>
-            <a href={`tel:${settings.phone_href}`} className="hidden h-9 items-center gap-1.5 transition-colors hover:text-[#EBC57D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EBC57D] min-[1280px]:flex"><Phone className="size-3.5" aria-hidden="true" />{settings.phone}</a>
-            <MiniDropdown label={settings.currency || "USD"} ariaLabel="Select currency" options={["USD", "EUR", "GBP"]} />
+          <div className="flex items-center gap-6 text-white/70">
+            <Link href="/blog#newsletter" className="hover:text-[#D96B2B] transition-colors">
+              Subscribe to Newsletter
+            </Link>
+            <span className="h-3 w-px bg-white/20" />
+            <a href={`mailto:${settings.email}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Mail className="size-3 text-[#D96B2B]" />
+              {settings.email}
+            </a>
           </div>
         </div>
-      </div> : null}
+      </div>
 
-      <header
-        ref={root}
-        onMouseEnter={cancelClose}
-        onMouseLeave={scheduleClose}
-        className="sticky top-0 z-[80]"
-      >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[68px] border-b border-[#0B1F33]/10 bg-[#FFFDF9]/95 backdrop-blur-md min-[1160px]:h-[78px]" />
-        <div className="relative mx-auto h-[68px] max-w-[1320px] px-4 text-[#0B1F33] min-[1160px]:h-[78px] sm:px-6">
-          <div className="grid h-full grid-cols-[auto_1fr_auto] items-center">
-            <Logo brandName={settings.company_name.replace(/\s+Packaging$/i, "") || "Fable"} descriptor={settings.brand_descriptor || "Packaging Co."} logoUrl={settings.logo_url || ""} />
-            <DesktopNav menus={menus} directItems={directItems} openMenu={openMenu} onOpen={open} onClose={close} />
-            <div className="hidden items-center gap-0.5 min-[1160px]:flex">
-              <button type="button" onClick={() => setSearchOpen(true)} aria-label="Open search" aria-haspopup="dialog" className="grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><Search className="size-5" /></button>
-              <Link href="/cart" aria-label="Shopping bag, 0 items" className="relative grid size-11 place-items-center rounded-lg outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><ShoppingBag className="size-5" /><span className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-[#D96B2B] text-[9px] text-white">0</span></Link>
-              <AccountMenu admin={admin} />
-              <Link href={settings.header_cta_href || "/get-a-quote"} style={{ color: "#FFFFFF" }} className="ml-2 flex h-11 items-center gap-2 whitespace-nowrap rounded-[10px] border border-[#D96B2B] bg-[#D96B2B] px-4 text-sm font-bold transition-colors hover:border-[#BC5420] hover:bg-[#BC5420] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2B] focus-visible:ring-offset-3 xl:h-12 xl:px-5">{settings.header_cta_label || "Get a Quote"} <ArrowRight className="size-4" aria-hidden="true" /></Link>
+      {/* Main Header */}
+      <header className="sticky top-0 z-[80] border-b border-[#0B1F33]/10 bg-[#FFFDF9]/95 backdrop-blur-md">
+        <div className="mx-auto flex h-[72px] max-w-[1320px] items-center justify-between px-4 sm:px-6">
+          {/* Logo */}
+          <Logo brandName="Fable" descriptor="Journal & Essays" />
+
+          {/* Desktop Navigation */}
+          <nav className="hidden items-center gap-8 min-[960px]:flex">
+            <Link
+              href="/"
+              className="text-sm font-medium text-[#0B1F33] hover:text-[#D96B2B] transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm font-medium text-[#0B1F33] hover:text-[#D96B2B] transition-colors"
+            >
+              All Articles
+            </Link>
+
+            {/* Topics dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => {
+                if (closeTimer.current) clearTimeout(closeTimer.current);
+                setTopicsDropdownOpen(true);
+              }}
+              onMouseLeave={() => {
+                closeTimer.current = setTimeout(() => setTopicsDropdownOpen(false), 200);
+              }}
+            >
+              <button
+                type="button"
+                className="flex items-center gap-1 text-sm font-medium text-[#0B1F33] hover:text-[#D96B2B] transition-colors py-2 cursor-pointer"
+              >
+                Topics &amp; Themes
+                <ChevronDown
+                  className={`size-3.5 transition-transform duration-200 ${topicsDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {topicsDropdownOpen && (
+                <div className="absolute top-full left-0 w-72 rounded-2xl border border-[#E7DDD2] bg-white p-3 shadow-xl transition-all space-y-1">
+                  {topics.map((t) => (
+                    <Link
+                      key={t.href}
+                      href={t.href}
+                      onClick={() => setTopicsDropdownOpen(false)}
+                      className="block p-3 rounded-xl hover:bg-[#FFF9F2] transition-colors group"
+                    >
+                      <span className="block text-xs font-bold uppercase tracking-wider text-[#0B1F33] group-hover:text-[#D96B2B]">
+                        {t.name}
+                      </span>
+                      <span className="block text-[11px] text-[#667085] mt-0.5">
+                        {t.desc}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-            <MobileMenu menus={menus} directItems={mobileDirectItems} admin={admin} onSearch={() => setSearchOpen(true)} />
+
+            <Link
+              href="/about"
+              className="text-sm font-medium text-[#0B1F33] hover:text-[#D96B2B] transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="text-sm font-medium text-[#0B1F33] hover:text-[#D96B2B] transition-colors"
+            >
+              Contact
+            </Link>
+          </nav>
+
+          {/* Right Action Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search stories"
+              className="grid size-10 place-items-center rounded-xl border border-[#E7DDD2] bg-white text-[#0B1F33] hover:border-[#D96B2B] hover:text-[#D96B2B] transition-colors cursor-pointer"
+            >
+              <Search className="size-4" />
+            </button>
+
+
+            <Link
+              href="/blog"
+              className="hidden sm:inline-flex items-center gap-2 rounded-xl bg-[#D96B2B] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-[#BC5420] shadow-md shadow-[#D96B2B]/20 ml-2"
+            >
+              Read Stories <ArrowRight className="size-3.5" />
+            </Link>
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="grid size-10 place-items-center rounded-xl border border-[#E7DDD2] bg-white text-[#0B1F33] min-[960px]:hidden"
+            >
+              <Menu className="size-5" />
+            </button>
           </div>
-          <MegaPanel menus={menus} openMenu={openMenu} onClose={close} onStay={cancelClose} onLeave={scheduleClose} />
         </div>
+
+        {/* Mobile dropdown */}
+        {mobileMenuOpen && (
+          <div className="border-t border-[#E7DDD2] bg-white px-6 py-5 min-[960px]:hidden space-y-4">
+            <div className="flex flex-col space-y-3 font-semibold text-sm">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-[#0B1F33] hover:text-[#D96B2B]"
+              >
+                Home
+              </Link>
+              <Link
+                href="/blog"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-[#0B1F33] hover:text-[#D96B2B]"
+              >
+                All Articles
+              </Link>
+              <div className="pt-2 border-t border-[#F0EAE2] space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  Topics
+                </span>
+                {topics.map((t) => (
+                  <Link
+                    key={t.href}
+                    href={t.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-xs font-bold text-[#0B1F33] hover:text-[#D96B2B]"
+                  >
+                    {t.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="pt-2 border-t border-[#F0EAE2] space-y-2">
+                <Link
+                  href="/about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-[#0B1F33] hover:text-[#D96B2B]"
+                >
+                  About the Journal
+                </Link>
+                <Link
+                  href="/contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-[#0B1F33] hover:text-[#D96B2B]"
+                >
+                  Contact
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
+
       <SearchPopup open={searchOpen} items={searchItems} onClose={closeSearch} />
     </>
   );

@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
   // Public pages do not need an Auth refresh. Avoid making every homepage
   // request depend on a Supabase Auth round trip.
   const pathname = request.nextUrl.pathname;
-  if (!pathname.startsWith("/admin") || pathname === "/admin/login" || pathname === "/admin/signup") {
+  if (!pathname.startsWith("/admin") || pathname === "/admin/login") {
     return NextResponse.next({ request });
   }
   if (!hasSupabaseEnv()) return NextResponse.next({ request });

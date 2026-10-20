@@ -119,36 +119,116 @@ export async function getFaqs(group: "home" | "quote" | "general" = "home"): Pro
   return data as CmsFaq[];
 }
 
+// High-performance in-memory cache to prevent redundant Supabase queries on every navigation
+const contentMemoryCache = new Map<string, { value: any; expiresAt: number }>();
+
+function getFromCache<T>(key: string): T | null {
+  const hit = contentMemoryCache.get(key);
+  if (hit && hit.expiresAt > Date.now()) {
+    return hit.value as T;
+  }
+  return null;
+}
+
+function saveToCache<T>(key: string, value: T, ttlMs = 45000): T {
+  contentMemoryCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+  return value;
+}
+
+export function invalidateContentCache(keyPrefix?: string) {
+  if (!keyPrefix) {
+    contentMemoryCache.clear();
+  } else {
+    for (const k of contentMemoryCache.keys()) {
+      if (k.startsWith(keyPrefix)) contentMemoryCache.delete(k);
+    }
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms = 1200, fallback: T): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+}
+
 export async function getPageContent(pageSlug: string) {
-  const supabase = await createClient();
-  if (!supabase) return {} as Record<string, string>;
-  const { data, error } = await supabase
-    .from("page_content")
-    .select("content_key,value")
-    .eq("page_slug", pageSlug)
-    .order("sort_order");
-  if (error || !data) return {} as Record<string, string>;
-  return Object.fromEntries(data.map((item) => [item.content_key, item.value])) as Record<string, string>;
+  const cacheKey = `page_content:${pageSlug}`;
+  const cached = getFromCache<Record<string, string>>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const supabase = await createClient();
+    if (!supabase) return {};
+
+    const fetcher = async () => {
+      const { data, error } = await supabase
+        .from("page_content")
+        .select("content_key,value")
+        .eq("page_slug", pageSlug)
+        .order("sort_order");
+      if (error || !data) return {} as Record<string, string>;
+      return Object.fromEntries(data.map((item) => [item.content_key, item.value])) as Record<string, string>;
+    };
+
+    const res = await withTimeout(fetcher(), 1200, {} as Record<string, string>);
+    return saveToCache(cacheKey, res);
+  } catch {
+    return {};
+  }
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const supabase = await createClient();
-  if (!supabase) return defaultSettings;
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select("value")
-    .eq("key", "general")
-    .maybeSingle();
-  if (error || !data?.value || typeof data.value !== "object") return defaultSettings;
-  return { ...defaultSettings, ...(data.value as Partial<SiteSettings>) };
+  const cacheKey = "site_settings:general";
+  const cached = getFromCache<SiteSettings>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const supabase = await createClient();
+    if (!supabase) return defaultSettings;
+
+    const fetcher = async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "general")
+        .maybeSingle();
+      if (error || !data?.value || typeof data.value !== "object") return defaultSettings;
+      return { ...defaultSettings, ...(data.value as Partial<SiteSettings>) };
+    };
+
+    const res = await withTimeout(fetcher(), 1200, defaultSettings);
+    return saveToCache(cacheKey, res);
+  } catch {
+    return defaultSettings;
+  }
 }
 
 export async function getHomeSectionVisibility(): Promise<Record<string, boolean>> {
-  const supabase = await createClient();
-  if (!supabase) return {};
-  const { data, error } = await supabase.from("site_settings").select("value").eq("key", "home_section_visibility").maybeSingle();
-  if (error || !data?.value || typeof data.value !== "object") return {};
-  return data.value as Record<string, boolean>;
+  const cacheKey = "site_settings:home_section_visibility";
+  const cached = getFromCache<Record<string, boolean>>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const supabase = await createClient();
+    if (!supabase) return {};
+
+    const fetcher = async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "home_section_visibility")
+        .maybeSingle();
+      if (error || !data?.value || typeof data.value !== "object") return {};
+      return data.value as Record<string, boolean>;
+    };
+
+    const res = await withTimeout(fetcher(), 1200, {});
+    return saveToCache(cacheKey, res);
+  } catch {
+    return {};
+  }
 }
 
 export async function getCatalogItems(kind?: "material" | "finish"): Promise<CmsCatalogItem[]> {

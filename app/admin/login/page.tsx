@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getAdmin } from "@/lib/auth";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { LoginForm } from "@/components/admin/LoginForm";
@@ -19,7 +18,6 @@ export default async function AdminLoginPage() {
             Supabase is not configured. Copy <code>.env.example</code> to <code>.env.local</code> and add your project keys.
           </div>
         )}
-        <p className="mt-5 text-center text-sm text-[#667085]">Approved but new here? <Link href="/admin/signup" className="font-bold text-[#D96B2B] hover:text-[#BC5420]">Sign up</Link></p>
       </section>
     </div>
   );

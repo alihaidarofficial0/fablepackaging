@@ -27,7 +27,18 @@ async function getClaimsWithTimeout(supabase: NonNullable<Awaited<ReturnType<typ
   ]);
 }
 
+import { cookies } from "next/headers";
+
 export const getAdmin = cache(async () => {
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+  const hasAuthCookie = allCookies.some(
+    (c) => c.name.startsWith("sb-") || c.name.includes("auth") || c.name.includes("token")
+  );
+  if (!hasAuthCookie) {
+    return null;
+  }
+
   const supabase = await createClient();
   if (!supabase) return null;
 

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "cat-box-styles",
+    "name": "Box Styles & Structural Design",
+    "slug": "box-styles-structural-design",
+    "description": "Rigid boxes, corrugated mailers, folding cartons, dielines, and structural packaging engineering."
+  },
+  {
+    "id": "cat-materials",
+    "name": "Materials & Substrates",
+    "slug": "materials-substrates",
+    "description": "Virgin kraft, greyboard cores, fluted corrugated boards, calipers, and paperboard selection."
+  },
+  {
+    "id": "cat-sustainability",
+    "name": "Sustainable Packaging",
+    "slug": "sustainable-packaging",
+    "description": "Circular lifecycles, monomaterial designs, post-consumer waste (PCR), and biodegradable inks."
+  },
+  {
+    "id": "cat-finishes",
+    "name": "Printing & Luxury Finishes",
+    "slug": "printing-luxury-finishes",
+    "description": "Hot foil stamping, blind debossing, soft-touch laminates, spot UV, and tactile embellishments."
+  },
+  {
+    "id": "cat-ecommerce",
+    "name": "E-Commerce & Unboxing",
+    "slug": "ecommerce-unboxing",
+    "description": "Direct-to-consumer shipping, branded unboxing reveals, tear-strips, and presentation caddies."
+  },
+  {
+    "id": "cat-industry",
+    "name": "Industry Solutions",
+    "slug": "industry-solutions",
+    "description": "Tailored packaging formats for cosmetics, fashion, gourmet food & beverage, and luxury goods."
+  },
+  {
+    "id": "cat-prepress",
+    "name": "Prepress & Design Guides",
+    "slug": "prepress-design-guides",
+    "description": "Production checklists, bleed tolerances, vector dielines, and press-ready artwork setup."
+  }
+]

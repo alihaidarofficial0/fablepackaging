@@ -526,3 +526,132 @@ export async function deleteSiteMedia(formData: FormData) {
   await audit("delete", "site-media", path);
   revalidatePath("/admin/media");
 }
+
+export type UserActionState = { error?: string; success?: string };
+
+export async function createAdminUserAction(_state: UserActionState, formData: FormData): Promise<UserActionState> {
+  const admin = await requireAdmin();
+  if (admin.role !== "owner") {
+    return { error: "Only owners can add new administrators." };
+  }
+
+  const rawEmail = String(formData.get("email") || "").toLowerCase().trim();
+  const rawPassword = String(formData.get("password") || "");
+  const rawRole = String(formData.get("role") || "editor");
+
+  const emailParsed = z.string().email().safeParse(rawEmail);
+  if (!emailParsed.success) {
+    return { error: "Please enter a valid email address." };
+  }
+  const email = emailParsed.data;
+
+  const passwordParsed = z.string().min(8, "Password must be at least 8 characters.").max(128).safeParse(rawPassword);
+  if (!passwordParsed.success) {
+    return { error: passwordParsed.error.issues[0]?.message || "Invalid password." };
+  }
+  const password = passwordParsed.data;
+
+  const roleParsed = z.enum(["owner", "editor"]).safeParse(rawRole);
+  if (!roleParsed.success) {
+    return { error: "Invalid role selected." };
+  }
+  const role = roleParsed.data;
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return { error: "Supabase service role is not configured. Add SUPABASE_SECRET_KEY." };
+  }
+
+  const { data: userData, error: authError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+
+  if (authError) {
+    return { error: authError.message };
+  }
+
+  const userId = userData.user.id;
+
+  const { error: dbError } = await adminClient.from("admin_users").upsert({
+    user_id: userId,
+    email,
+    role,
+    active: true,
+  });
+
+  if (dbError) {
+    return { error: `User created in Auth, but database record failed: ${dbError.message}` };
+  }
+
+  await audit("create", "admin_users", userId);
+  revalidatePath("/admin/users");
+  return { success: `Successfully created admin user: ${email}` };
+}
+
+export async function toggleAdminUserStatusAction(userId: string, currentActive: boolean) {
+  const admin = await requireAdmin();
+  if (admin.role !== "owner") {
+    throw new Error("Only owners can change administrator status.");
+  }
+  if (admin.id === userId) {
+    throw new Error("You cannot change status of your own account.");
+  }
+
+  const client = await mutationClient();
+  const { error } = await client
+    .from("admin_users")
+    .update({ active: !currentActive })
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+  await audit("update", "admin_users", userId);
+  revalidatePath("/admin/users");
+}
+
+export async function deleteAdminUserAction(userId: string) {
+  const admin = await requireAdmin();
+  if (admin.role !== "owner") {
+    throw new Error("Only owners can delete administrator accounts.");
+  }
+  if (admin.id === userId) {
+    throw new Error("You cannot delete your own account.");
+  }
+
+  const client = createAdminClient() || (await mutationClient());
+  await client.from("admin_users").delete().eq("user_id", userId);
+
+  const directAdmin = createAdminClient();
+  if (directAdmin?.auth?.admin) {
+    try {
+      await directAdmin.auth.admin.deleteUser(userId);
+    } catch (e) {
+      console.error("Auth delete error:", e);
+    }
+  }
+
+  await audit("delete", "admin_users", userId);
+  revalidatePath("/admin/users");
+}
+
+export async function saveAboutPageAction(formData: FormData) {
+  const client = await mutationClient();
+  const rawData = formData.get("payload");
+  if (typeof rawData !== "string") {
+    throw new Error("Invalid payload provided.");
+  }
+  const payload = JSON.parse(rawData);
+
+  const { error } = await client
+    .from("site_settings")
+    .upsert({ key: "about_page", value: payload });
+
+  if (error) throw new Error(error.message);
+
+  await audit("update", "site_settings", "about_page");
+  revalidatePath("/about");
+  revalidatePath("/admin/pages/about");
+}
+
+

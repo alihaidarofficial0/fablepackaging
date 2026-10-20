@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowUpRight, Bell, BookOpen, Boxes, ChevronDown, FileText, FolderKanban,
-  Globe2, ImageIcon, Inbox, LayoutDashboard, LogOut, Menu, PackageOpen,
+  Bell, BookOpen, Boxes, ChevronDown, FileText, FolderKanban,
+  Inbox, LayoutDashboard, Menu, PackageOpen,
   PanelLeft, Search, Settings, Users, X,
 } from "lucide-react";
 import { logoutAction } from "@/app/admin/actions";
@@ -19,36 +19,51 @@ type NavItem = {
 
 const groups: { label: string; items: NavItem[] }[] = [
   { label: "Dashboard", items: [{ label: "Overview", href: "/admin", icon: LayoutDashboard }] },
-  { label: "Content", items: [
-    { label: "Pages", href: "/admin/pages", icon: FileText },
-    { label: "Header", href: "/admin/header", icon: Menu },
-    { label: "Products", href: "/admin/products", icon: Boxes, activePaths: ["/admin/collections/products"] },
-    { label: "Industries", href: "/admin/industries", icon: PackageOpen, activePaths: ["/admin/collections/industries"] },
-    { label: "Projects", href: "/admin/projects", icon: FolderKanban, activePaths: ["/admin/collections/projects"] },
-    { label: "FAQs", href: "/admin/faqs", icon: FileText, activePaths: ["/admin/collections/faqs"] },
-    { label: "Materials & finishes", href: "/admin/materials", icon: PackageOpen, activePaths: ["/admin/collections/catalog_items"] },
-    { label: "Blog", href: "/admin/blog", icon: BookOpen, activePaths: ["/admin/collections/blog_posts"] },
-    { label: "Testimonials", href: "/admin/testimonials", icon: Users, activePaths: ["/admin/collections/testimonials"] },
-    { label: "Media library", href: "/admin/media", icon: ImageIcon },
+  { label: "Journal", items: [
+    { label: "Articles", href: "/admin/blog", icon: BookOpen, activePaths: ["/admin/blog/new", "/admin/blog/edit"] },
+    { label: "Categories", href: "/admin/blog/categories", icon: FolderKanban },
   ] },
-  { label: "Business", items: [
-    { label: "Leads & inquiries", href: "/admin/leads", icon: Inbox },
-    { label: "Quote requests", href: "/admin/quotes", icon: FileText },
+  { label: "Website", items: [
+    { label: "Static Pages", href: "/admin/pages", icon: FileText, activePaths: ["/admin/pages/home", "/admin/pages/about"] },
+  ] },
+  { label: "Audience", items: [
+    { label: "Subscribers", href: "/admin/leads", icon: Inbox },
   ] },
   { label: "Settings", items: [
-    { label: "Navigation", href: "/admin/navigation", icon: Menu, activePaths: ["/admin/collections/navigation_items"] },
-    { label: "Site settings", href: "/admin/settings", icon: Settings },
-    { label: "SEO settings", href: "/admin/seo", icon: Globe2 },
-    { label: "Users", href: "/admin/users", icon: Users },
+    { label: "Site Settings", href: "/admin/settings", icon: Settings },
+    { label: "Admin Users", href: "/admin/users", icon: Users },
   ] },
 ];
 const allItems = groups.flatMap((group) => group.items);
 
 function isActive(pathname: string, item: NavItem) {
-  const paths = [item.href, ...(item.activePaths || [])];
-  return paths.some((path) =>
-    path === "/admin" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`),
-  );
+  if (item.href === "/admin") {
+    return pathname === "/admin";
+  }
+
+  // Exact match
+  if (pathname === item.href) {
+    return true;
+  }
+
+  // Articles shouldn't match categories
+  if (item.href === "/admin/blog") {
+    if (pathname.startsWith("/admin/blog/categories")) {
+      return false;
+    }
+    return (
+      pathname.startsWith("/admin/blog/new") ||
+      pathname.startsWith("/admin/blog/edit")
+    );
+  }
+
+  if (item.activePaths && item.activePaths.length > 0) {
+    if (item.activePaths.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+      return true;
+    }
+  }
+
+  return pathname.startsWith(`${item.href}/`);
 }
 
 function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
@@ -61,7 +76,9 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
           const { icon: Icon, label, href } = item;
           const active = isActive(pathname, item);
           return <Link key={href} href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={`relative flex min-h-11 items-center gap-3 rounded-lg border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#E6AD65]/45 ${active ? "border-[#F08A4C] bg-[#D96B2B] text-white shadow-[0_6px_18px_rgba(217,107,43,0.28)]" : "border-transparent text-white/68 hover:bg-white/[0.055] hover:text-white"}`}>
-            <Icon className={`size-[17px] shrink-0 ${active ? "text-white" : "text-white/56"}`} aria-hidden="true" />
+            <span className="flex size-5 shrink-0 items-center justify-center">
+              <Icon className={`size-[18px] ${active ? "text-white" : "text-white/56"}`} aria-hidden="true" />
+            </span>
             <span className="truncate">{label}</span>
             {active ? <span className="ml-auto size-1.5 rounded-full bg-white" aria-hidden="true" /> : null}
           </Link>;
@@ -112,7 +129,6 @@ export function AdminShell({ children, email, role = "Administrator" }: { childr
         <button type="button" onClick={() => setDrawerOpen(false)} className="grid size-10 place-items-center rounded-lg text-white/65 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E6AD65] lg:hidden" aria-label="Close navigation"><X className="size-5" /></button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto py-6 pr-1"><AdminNav onNavigate={() => setDrawerOpen(false)} /></div>
-      <div className="border-t border-white/10 pt-4"><Link href="/" className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#E6AD65] transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E6AD65]"><ArrowUpRight className="size-[17px]" />View website</Link><form action={logoutAction}><button className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-white/68 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E6AD65]"><LogOut className="size-[17px]" />Sign out</button></form></div>
     </aside>
     <div className="min-h-screen lg:pl-[264px]">
       <header className="sticky top-0 z-30 border-b border-[#E7DDD2] bg-[#FFFDF9]/95 backdrop-blur-md"><div className="mx-auto flex h-[72px] max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-8">

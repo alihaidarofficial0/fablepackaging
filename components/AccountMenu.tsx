@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { LayoutDashboard, LogIn, LogOut, UserPlus } from "lucide-react";
+import { LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/app/admin/actions";
 
@@ -47,7 +47,6 @@ export function AccountMenu({ admin }: { admin: HeaderAdmin }) {
           <>
             <p className="px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-[#667085]">Admin access</p>
             <Link href="/admin/login" role="menuitem" onClick={() => setOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><LogIn className="size-4" aria-hidden="true" />Sign in</Link>
-            <Link href="/admin/signup" role="menuitem" onClick={() => setOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] outline-none transition-colors hover:bg-[#F3E8DA] hover:text-[#D96B2B] focus-visible:ring-2 focus-visible:ring-[#D96B2B]"><UserPlus className="size-4" aria-hidden="true" />Sign up</Link>
           </>
         )}
       </div>

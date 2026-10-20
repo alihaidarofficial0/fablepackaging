@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Search, UserPlus, X } from "lucide-react";
+import { ArrowRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { navMenus, type NavMenu } from "./MegaMenu";
@@ -116,7 +116,6 @@ export function MobileMenu({ menus = navMenus, directItems = defaultDirectLinks,
           ) : (
             <>
               <Link href="/admin/login" onClick={closeMenu} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] hover:bg-[#F3E8DA] hover:text-[#D96B2B]"><LogIn className="size-4" aria-hidden="true" />Admin sign in</Link>
-              <Link href="/admin/signup" onClick={closeMenu} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-[#344054] hover:bg-[#F3E8DA] hover:text-[#D96B2B]"><UserPlus className="size-4" aria-hidden="true" />Admin sign up</Link>
             </>
           )}
         </div>
