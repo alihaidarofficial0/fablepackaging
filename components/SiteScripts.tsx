@@ -7,7 +7,7 @@ function inject(html: string, target: "head" | "body") {
   const parent = target === "head" ? document.head : document.body;
   const template = document.createElement("template");
   template.innerHTML = html;
-  const added: ChildNode[] = [];
+  const added: Node[] = [];
 
   Array.from(template.content.childNodes).forEach((node) => {
     if (node.nodeName === "SCRIPT") {
