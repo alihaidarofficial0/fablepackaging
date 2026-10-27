@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getAdmin } from "@/lib/auth";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { LoginForm } from "@/components/admin/LoginForm";
 
 export const metadata = { title: "Admin login" };
@@ -13,11 +12,7 @@ export default async function AdminLoginPage() {
         <p className="text-xs font-extrabold uppercase tracking-[.18em] text-[#D96B2B]">Fable Packaging</p>
         <h1 className="mt-3 font-serif text-4xl text-[#0B1F33]">Admin sign in</h1>
         <p className="mt-3 text-sm leading-6 text-[#667085]">Only invited administrators can access website content and customer inquiries.</p>
-        {hasSupabaseEnv() ? <LoginForm /> : (
-          <div className="mt-7 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            Supabase is not configured. Copy <code>.env.example</code> to <code>.env.local</code> and add your project keys.
-          </div>
-        )}
+        <LoginForm />
       </section>
     </div>
   );

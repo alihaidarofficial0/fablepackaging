@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 const pages = [
   ["Home", "/", "Published", "/admin/pages/home"],
   ["About", "/about", "Published", "/admin/pages/about"],
-  ["Contact", "/contact", "Published", "/admin/content"],
+  ["Contact", "/contact", "Published", "/admin/settings"],
 ] as const;
 
 export default async function PagesPage() {

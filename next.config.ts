@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
       { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-      { key: "Content-Security-Policy", value: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self'; style-src 'self' 'unsafe-inline'; ${scriptPolicy}; connect-src 'self' https://*.supabase.co wss://*.supabase.co; upgrade-insecure-requests` },
+      { key: "Content-Security-Policy", value: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com https://www.googletagmanager.com https://www.google.com https://*.google.com https://stats.g.doubleclick.net; font-src 'self'; style-src 'self' 'unsafe-inline'; ${scriptPolicy} https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://www.google.com https://www.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://*.analytics.google.com https://stats.g.doubleclick.net; frame-src https://www.googletagmanager.com; upgrade-insecure-requests` },
     ];
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

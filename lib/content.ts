@@ -15,6 +15,7 @@ import type {
   CmsProject,
   SiteSettings,
 } from "@/types/cms";
+import { sanitizeSiteScripts } from "@/lib/site-scripts";
 
 const fallbackCatalog: CmsCatalogItem[] = [
   { kind: "material", name: "Natural kraft", slug: "natural-kraft", description: "A reliable, print-friendly option selected for strength, feel and end-of-life practicality.", image: "/images/products/shipping-box.webp", alt: "Natural kraft packaging board", sort_order: 10 },
@@ -64,6 +65,8 @@ const defaultSettings: SiteSettings = {
   header_cta_label: "Get a Quote",
   header_cta_href: "/get-a-quote",
   logo_url: "",
+  header_scripts: "",
+  footer_scripts: "",
 };
 
 export async function getProducts(): Promise<CmsProduct[]> {
@@ -195,7 +198,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         .eq("key", "general")
         .maybeSingle();
       if (error || !data?.value || typeof data.value !== "object") return defaultSettings;
-      return { ...defaultSettings, ...(data.value as Partial<SiteSettings>) };
+      const merged = { ...defaultSettings, ...(data.value as Partial<SiteSettings>) };
+      merged.header_scripts = sanitizeSiteScripts(merged.header_scripts || "");
+      merged.footer_scripts = sanitizeSiteScripts(merged.footer_scripts || "");
+      return merged;
     };
 
     const res = await withTimeout(fetcher(), 1200, defaultSettings);

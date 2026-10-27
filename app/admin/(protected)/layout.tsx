@@ -16,7 +16,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
   const client = createAdminClient();
   const schemaCheck = client
     ? await client.from("products").select("id").limit(1)
-    : { error: { code: "CONFIG_MISSING", message: "Supabase is not configured." } };
+    : { error: { code: "CONFIG_MISSING", message: "The admin service is temporarily unavailable." } };
 
   if (schemaCheck.error && !isMissingSchemaError(schemaCheck.error)) {
     throw new Error(schemaCheck.error.message);

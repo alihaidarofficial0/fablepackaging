@@ -110,4 +110,6 @@ export type SiteSettings = {
   header_cta_label?: string;
   header_cta_href?: string;
   logo_url?: string;
+  header_scripts?: string;
+  footer_scripts?: string;
 };

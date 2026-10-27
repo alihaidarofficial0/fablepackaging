@@ -8,6 +8,7 @@ import { PublicChrome } from "@/components/PublicChrome";
 import { ToastContainer } from "@/components/Toast";
 import { getSiteSettings } from "@/lib/content";
 import { getAdmin } from "@/lib/auth";
+import { SiteScripts } from "@/components/SiteScripts";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fablepack.co"),
@@ -34,6 +35,7 @@ export default async function RootLayout({
           Skip to content
         </a>
         <ToastContainer />
+        <SiteScripts header={settings.header_scripts} footer={settings.footer_scripts} />
         <PublicChrome
           header={
             <Header

@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { homepageSectionDefinitions, type HomepageSection } from "@/lib/admin-homepage";
 import { sanitizeBlogContent } from "@/lib/blog-content";
+import { sanitizeSiteScripts } from "@/lib/site-scripts";
 
 export type AuthState = { error?: string; success?: string };
 export type CollectionName = "products" | "industries" | "projects" | "faqs" | "catalog_items" | "navigation_items" | "blog_posts" | "testimonials";
@@ -46,7 +47,7 @@ function commaList(formData: FormData, key: string) {
 async function mutationClient() {
   await requireAdmin();
   const client = createAdminClient() || (await createClient());
-  if (!client) throw new Error("Supabase is not configured.");
+  if (!client) throw new Error("The admin service is temporarily unavailable.");
   return client;
 }
 
@@ -119,7 +120,7 @@ export async function loginAction(_state: AuthState, formData: FormData): Promis
   if (!parsed.success) return { error: "Enter a valid email address and password." };
 
   const supabase = await createClient();
-  if (!supabase) return { error: "Supabase environment variables are not configured." };
+  if (!supabase) return { error: "Sign in is temporarily unavailable. Please try again later." };
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     const serviceUnavailable =
@@ -127,7 +128,7 @@ export async function loginAction(_state: AuthState, formData: FormData): Promis
       /fetch failed|failed to fetch|network/i.test(error.message);
 
     if (serviceUnavailable) {
-      return { error: "The authentication service is unavailable. Check the Supabase project configuration and try again." };
+      return { error: "Sign in is temporarily unavailable. Please try again later." };
     }
 
     return { error: "The email address or password is incorrect." };
@@ -173,7 +174,7 @@ export async function signupAction(_state: AuthState, formData: FormData): Promi
   if (!allowed) return { error: "This email is not approved for an admin account. Ask the site owner for access." };
 
   const supabase = await createClient();
-  if (!supabase) return { error: "Supabase environment variables are not configured." };
+  if (!supabase) return { error: "Sign in is temporarily unavailable. Please try again later." };
 
   const { data, error } = await supabase.auth.signUp({ email, password: parsed.data.password });
   if (error) return { error: "Registration could not be completed. Please try signing in or contact the site owner." };
@@ -426,12 +427,14 @@ export async function saveSiteSettings(formData: FormData) {
     newsletter_title: z.string().max(200).parse(text(formData, "newsletter_title")),
     newsletter_body: z.string().max(500).parse(text(formData, "newsletter_body")),
     copyright_text: z.string().max(200).parse(text(formData, "copyright_text")),
+    header_scripts: sanitizeSiteScripts(z.string().max(20000).parse(text(formData, "header_scripts"))),
+    footer_scripts: sanitizeSiteScripts(z.string().max(20000).parse(text(formData, "footer_scripts"))),
   };
   const { error } = await client.from("site_settings").upsert({ key: "general", value: { ...((current?.value || {}) as Record<string, unknown>), ...value } });
   if (error) throw new Error(error.message);
   await audit("update", "site_settings", "general");
   revalidatePath("/", "layout");
-  revalidatePath("/admin/content");
+  revalidatePath("/admin/settings");
 }
 
 export async function saveHomepageSection(section: HomepageSection, formData: FormData) {
@@ -559,7 +562,7 @@ export async function createAdminUserAction(_state: UserActionState, formData: F
 
   const adminClient = createAdminClient();
   if (!adminClient) {
-    return { error: "Supabase service role is not configured. Add SUPABASE_SECRET_KEY." };
+    return { error: "This account could not be created. Please try again later." };
   }
 
   const { data: userData, error: authError } = await adminClient.auth.admin.createUser({
