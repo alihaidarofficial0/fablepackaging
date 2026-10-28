@@ -16,6 +16,8 @@ import type {
   SiteSettings,
 } from "@/types/cms";
 import { sanitizeSiteScripts } from "@/lib/site-scripts";
+import { sanitizeAssetUrl } from "@/lib/assets";
+import { normalizeSocialLinks } from "@/lib/social";
 
 const fallbackCatalog: CmsCatalogItem[] = [
   { kind: "material", name: "Natural kraft", slug: "natural-kraft", description: "A reliable, print-friendly option selected for strength, feel and end-of-life practicality.", image: "/images/products/shipping-box.webp", alt: "Natural kraft packaging board", sort_order: 10 },
@@ -52,6 +54,7 @@ const defaultSettings: SiteSettings = {
   instagram: "",
   linkedin: "",
   youtube: "",
+  social_links: [],
   tagline: "Thoughtful custom packaging for ambitious brands. Sustainable, scalable and memorable.",
   newsletter_title: "Packaging notes, worth opening.",
   newsletter_body: "Fresh ideas, useful guides and product news. No clutter.",
@@ -65,6 +68,7 @@ const defaultSettings: SiteSettings = {
   header_cta_label: "Get a Quote",
   header_cta_href: "/get-a-quote",
   logo_url: "",
+  favicon_url: "",
   header_scripts: "",
   footer_scripts: "",
 };
@@ -201,10 +205,14 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       const merged = { ...defaultSettings, ...(data.value as Partial<SiteSettings>) };
       merged.header_scripts = sanitizeSiteScripts(merged.header_scripts || "");
       merged.footer_scripts = sanitizeSiteScripts(merged.footer_scripts || "");
+      merged.logo_url = sanitizeAssetUrl(merged.logo_url || "");
+      merged.favicon_url = sanitizeAssetUrl(merged.favicon_url || "");
+      merged.social_links = normalizeSocialLinks(merged.social_links, merged);
       return merged;
     };
 
-    const res = await withTimeout(fetcher(), 1200, defaultSettings);
+    const res = await withTimeout<SiteSettings | null>(fetcher(), 4000, null);
+    if (!res) return defaultSettings;
     return saveToCache(cacheKey, res);
   } catch {
     return defaultSettings;

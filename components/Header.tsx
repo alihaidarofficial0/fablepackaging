@@ -5,6 +5,8 @@ import { Sparkles, Mail, Search, ArrowRight, Menu, ChevronDown } from "lucide-re
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "./Logo";
 import { SearchPopup, type SiteSearchItem } from "./SearchPopup";
+import { SocialLinks } from "./SocialLinks";
+import { normalizeSocialLinks } from "@/lib/social";
 import type { SiteSettings } from "@/types/cms";
 import type { HeaderAdmin } from "./AccountMenu";
 
@@ -33,6 +35,11 @@ export function Header({
     { label: "About the Journal", href: "/about", category: "Publication", description: "Our editorial mission and philosophy." },
     { label: "Reader Contact", href: "/contact", category: "Publication", description: "Get in touch with the editors." },
   ], []);
+
+  const socials = useMemo(
+    () => normalizeSocialLinks(settings.social_links, settings),
+    [settings],
+  );
 
   const topics = [
     { name: "Box Styles & Structure", href: "/blog/category/box-styles-structural-design", desc: "Rigid boxes, mailers & dielines" },
@@ -71,7 +78,7 @@ export function Header({
       <header className="sticky top-0 z-[80] border-b border-[#0B1F33]/10 bg-[#FFFDF9]/95 backdrop-blur-md">
         <div className="mx-auto flex h-[72px] max-w-[1320px] items-center justify-between px-4 sm:px-6">
           {/* Logo */}
-          <Logo brandName="Fable" descriptor="Journal & Essays" />
+          <Logo logoUrl={settings.logo_url} />
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-8 min-[960px]:flex">
@@ -154,7 +161,11 @@ export function Header({
             >
               <Search className="size-4" />
             </button>
-
+            {socials.length ? (
+              <div className="hidden min-[960px]:block">
+                <SocialLinks links={socials} variant="light" size="sm" wrap={false} />
+              </div>
+            ) : null}
 
             <Link
               href="/blog"
@@ -223,6 +234,11 @@ export function Header({
                   Contact
                 </Link>
               </div>
+              {socials.length ? (
+                <div className="pt-2 border-t border-[#F0EAE2]">
+                  <SocialLinks links={socials} variant="light" />
+                </div>
+              ) : null}
             </div>
           </div>
         )}

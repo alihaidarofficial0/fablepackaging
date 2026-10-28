@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, Youtube, BookOpen, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Logo } from "./Logo";
 import { NewsletterForm } from "./NewsletterForm";
+import { SocialLinks } from "./SocialLinks";
+import { normalizeSocialLinks } from "@/lib/social";
 import type { SiteSettings } from "@/types/cms";
 
 export function Footer({ settings }: { settings: SiteSettings }) {
-  const socials = [
-    [Facebook, "Facebook", settings.facebook],
-    [Instagram, "Instagram", settings.instagram],
-    [Linkedin, "LinkedIn", settings.linkedin],
-    [Youtube, "YouTube", settings.youtube],
-  ] as const;
+  const socials = normalizeSocialLinks(settings.social_links, settings);
 
   const topicLinks = [
     ["Box Styles & Structure", "/blog/category/box-styles-structural-design"],
@@ -34,26 +31,13 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="h-px bg-gradient-to-r from-transparent via-[#D96B2B]/45 to-transparent" />
       <div className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1.3fr] lg:gap-12 lg:py-16">
         {/* Brand */}
-        <div>
-          <Logo inverse brandName="Fable" descriptor="Journal & Essays" />
-          <p className="mt-5 max-w-[320px] text-sm leading-6 text-white/65 font-sans">
+        <div className="min-w-0 pt-1">
+          <Logo inverse logoUrl={settings.logo_url} />
+          <p className="mt-6 max-w-[320px] text-sm leading-6 text-white/65 font-sans">
             A dedicated publication exploring structural design, material culture, sustainable choices, and craftsmanship.
           </p>
-          <div className="mt-6 flex gap-2">
-            {socials
-              .filter(([, , href]) => href)
-              .map(([Icon, label, href]) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={label}
-                  className="grid size-10 place-items-center rounded-full border border-white/15 bg-white/5 text-white/75 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
-                >
-                  <Icon className="size-4" />
-                </a>
-              ))}
+          <div className="mt-6">
+            <SocialLinks links={socials} variant="dark" />
           </div>
         </div>
 

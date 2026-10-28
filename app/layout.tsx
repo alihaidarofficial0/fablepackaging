@@ -10,15 +10,26 @@ import { getSiteSettings } from "@/lib/content";
 import { getAdmin } from "@/lib/auth";
 import { SiteScripts } from "@/components/SiteScripts";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.fablepack.co"),
-  title: {
-    default: "Fable Journal — Packaging Design, Craftsmanship & Material Culture",
-    template: "%s | Fable Journal",
-  },
-  description:
-    "An editorial publication exploring structural design, material science, sustainability, and the tactile art of packaging.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.fablepack.co");
+  const stamp = encodeURIComponent(settings.favicon_url || "default");
+
+  return {
+    metadataBase,
+    title: {
+      default: "Fable Journal — Packaging Design, Craftsmanship & Material Culture",
+      template: "%s | Fable Journal",
+    },
+    description:
+      "An editorial publication exploring structural design, material science, sustainability, and the tactile art of packaging.",
+    icons: {
+      icon: [{ url: `/icon?v=${stamp}`, type: "image/png" }],
+      shortcut: `/icon?v=${stamp}`,
+      apple: [{ url: `/apple-icon?v=${stamp}`, type: "image/png" }],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

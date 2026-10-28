@@ -8,8 +8,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { homepageSectionDefinitions, type HomepageSection } from "@/lib/admin-homepage";
+import { invalidateContentCache } from "@/lib/content";
 import { sanitizeBlogContent } from "@/lib/blog-content";
 import { sanitizeSiteScripts } from "@/lib/site-scripts";
+import { sanitizeAssetUrl } from "@/lib/assets";
+import { saveUploadBuffer } from "@/lib/uploadsServer";
+import { isSocialPlatform, legacySocialFromLinks, sanitizeSocialUrl, SOCIAL_PLATFORMS, type SocialLink } from "@/lib/social";
 
 export type AuthState = { error?: string; success?: string };
 export type CollectionName = "products" | "industries" | "projects" | "faqs" | "catalog_items" | "navigation_items" | "blog_posts" | "testimonials";
@@ -23,6 +27,9 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/webp",
   "image/avif",
   "image/gif",
+  "image/svg+xml",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
 ]);
 const SLUG_COLLECTIONS = new Set<CollectionName>([
   "products",
@@ -410,19 +417,48 @@ export async function savePageContent(id: string, formData: FormData) {
   revalidatePath("/admin/content");
 }
 
+async function saveBrandAsset(entry: FormDataEntryValue | null) {
+  if (!(entry instanceof File) || entry.size === 0) return "";
+  if (entry.size > MAX_IMAGE_SIZE) throw new Error("The image must be smaller than 10 MB.");
+  const allowedName = /\.(png|jpe?g|webp|gif|avif|svg|ico)$/i.test(entry.name);
+  if (!entry.type.startsWith("image/") && !ALLOWED_IMAGE_TYPES.has(entry.type) && !allowedName) {
+    throw new Error("Upload a JPG, PNG, WebP, SVG, or ICO image.");
+  }
+  const buffer = Buffer.from(await entry.arrayBuffer());
+  const { url } = await saveUploadBuffer(buffer, entry.name, entry.type || "image/png", "uploads");
+  return sanitizeAssetUrl(url);
+}
+
 export async function saveSiteSettings(formData: FormData) {
   const client = await mutationClient();
   const { data: current } = await client.from("site_settings").select("value").eq("key", "general").maybeSingle();
+  const platforms = formData.getAll("social_platform").map((value) => String(value));
+  const urls = formData.getAll("social_url").map((value) => String(value));
+  const seen = new Set<string>();
+  const social_links = platforms
+    .map((platform, index) => ({
+      platform,
+      url: sanitizeSocialUrl(z.string().max(1000).parse(urls[index] || "")),
+    }))
+    .filter((item) => {
+      if (!isSocialPlatform(item.platform) || !item.url || seen.has(item.platform)) return false;
+      seen.add(item.platform);
+      return true;
+    })
+    .slice(0, SOCIAL_PLATFORMS.length) as SocialLink[];
+  const legacy = legacySocialFromLinks(social_links);
+  const uploadedLogo = await saveBrandAsset(formData.get("logo_file"));
+  const uploadedFavicon = await saveBrandAsset(formData.get("favicon_file"));
   const value = {
     company_name: z.string().min(2).max(120).parse(text(formData, "company_name")),
     email: emailSchema.parse(text(formData, "email")),
     phone: z.string().max(50).parse(text(formData, "phone")),
     phone_href: z.string().max(30).parse(text(formData, "phone_href")),
     address: z.string().max(500).parse(text(formData, "address")),
-    facebook: z.string().max(1000).parse(text(formData, "facebook")),
-    instagram: z.string().max(1000).parse(text(formData, "instagram")),
-    linkedin: z.string().max(1000).parse(text(formData, "linkedin")),
-    youtube: z.string().max(1000).parse(text(formData, "youtube")),
+    ...legacy,
+    social_links,
+    logo_url: uploadedLogo || sanitizeAssetUrl(z.string().max(1000).parse(text(formData, "logo_url"))),
+    favicon_url: uploadedFavicon || sanitizeAssetUrl(z.string().max(1000).parse(text(formData, "favicon_url"))),
     tagline: z.string().max(500).parse(text(formData, "tagline")),
     newsletter_title: z.string().max(200).parse(text(formData, "newsletter_title")),
     newsletter_body: z.string().max(500).parse(text(formData, "newsletter_body")),
@@ -433,8 +469,11 @@ export async function saveSiteSettings(formData: FormData) {
   const { error } = await client.from("site_settings").upsert({ key: "general", value: { ...((current?.value || {}) as Record<string, unknown>), ...value } });
   if (error) throw new Error(error.message);
   await audit("update", "site_settings", "general");
+  invalidateContentCache("site_settings");
   revalidatePath("/", "layout");
+  revalidatePath("/");
   revalidatePath("/admin/settings");
+  redirect("/admin/settings?saved=1");
 }
 
 export async function saveHomepageSection(section: HomepageSection, formData: FormData) {
@@ -473,11 +512,12 @@ export async function saveHeaderSettings(formData: FormData) {
     brand_descriptor: z.string().max(80).parse(text(formData, "brand_descriptor")),
     header_cta_label: z.string().min(2).max(80).parse(text(formData, "header_cta_label")),
     header_cta_href: z.string().min(1).max(1000).parse(text(formData, "header_cta_href")),
-    logo_url: z.string().max(1000).parse(text(formData, "logo_url")),
+    logo_url: sanitizeAssetUrl(z.string().max(1000).parse(text(formData, "logo_url"))),
   };
   const { error } = await client.from("site_settings").upsert({ key: "general", value: { ...((current?.value || {}) as Record<string, unknown>), ...header } });
   if (error) throw new Error(error.message);
   await audit("update", "header", "general");
+  invalidateContentCache("site_settings");
   revalidatePath("/", "layout");
   revalidatePath("/admin/header");
 }

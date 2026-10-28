@@ -4,20 +4,28 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
-  Clock,
-  Calendar,
   User,
-  Share2,
   Bookmark,
-  CheckCircle2,
   HelpCircle,
   Play,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/shared/Container";
+import { SocialLinks } from "@/components/SocialLinks";
 import { getPublishedBlogBySlug, getPublishedBlogs } from "@/app/admin/blog/actions";
 import { resolveBlogThumbnail, resolveBlogCover } from "@/lib/blogImage";
 import { sanitizeBlogContent } from "@/lib/blog-content";
+import { getSiteSettings } from "@/lib/content";
+import { normalizeSocialLinks } from "@/lib/social";
+
+function bannerDek(value?: string | null, max = 180) {
+  const clean = String(value || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max).replace(/\s+\S*$/, "")}…`;
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "Recently published";
@@ -71,9 +79,10 @@ export default async function BlogArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [post, allPosts] = await Promise.all([
+  const [post, allPosts, settings] = await Promise.all([
     getPublishedBlogBySlug(slug),
     getPublishedBlogs(),
+    getSiteSettings(),
   ]);
 
   if (!post) notFound();
@@ -103,6 +112,7 @@ export default async function BlogArticlePage({
   };
 
   const schemaScript = post.schemaScript || post.schema_script;
+  const socials = normalizeSocialLinks(settings.social_links, settings);
 
   return (
     <>
@@ -123,9 +133,9 @@ export default async function BlogArticlePage({
 
       <article className="bg-[#FFFDF9] pb-16">
         {/* Article Header */}
-        <header className="border-b border-[#E7DDD2] bg-[linear-gradient(180deg,#FFF9F2,#FFFDF9)] py-12 sm:py-16 lg:py-20">
+        <header className="border-b border-[#E7DDD2] bg-[linear-gradient(180deg,#FFF9F2,#FFFDF9)] py-10 sm:py-12 lg:py-14">
           <Container>
-            <div className="w-full space-y-6">
+            <div className="w-full space-y-5">
               <Link
                 href="/blog"
                 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D96B2B] hover:text-[#BC5420] transition-colors"
@@ -133,18 +143,20 @@ export default async function BlogArticlePage({
                 <ArrowLeft className="size-4" /> Back to Journal
               </Link>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <span className="inline-block px-3.5 py-1.5 rounded-full bg-[#FFF0E2] text-[#D96B2B] text-xs font-bold uppercase tracking-wider border border-[#D96B2B]/20">
                   {post.category || "Journal"}
                 </span>
 
-                <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl xl:text-[68px] font-bold text-[#0B1F33] leading-[1.08] tracking-tight">
+                <h1 className="w-full font-serif text-3xl font-bold leading-[1.12] tracking-tight text-[#0B1F33] sm:text-5xl lg:text-6xl line-clamp-3">
                   {post.title}
                 </h1>
 
-                <p className="text-lg sm:text-2xl text-[#526171] leading-relaxed max-w-5xl">
-                  {post.excerpt}
-                </p>
+                {post.excerpt ? (
+                  <p className="w-full text-base leading-7 text-[#526171] sm:text-lg line-clamp-3">
+                    {bannerDek(post.excerpt)}
+                  </p>
+                ) : null}
               </div>
 
               {/* Author & Meta Bar */}
@@ -163,7 +175,8 @@ export default async function BlogArticlePage({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <SocialLinks links={socials} variant="light" size="sm" wrap={false} />
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E7DDD2] bg-white text-[#0B1F33]">
                     <Bookmark className="size-3.5 text-[#D96B2B]" />
                     <span>Curated Read</span>
@@ -272,6 +285,16 @@ export default async function BlogArticlePage({
                 </div>
               </div>
             )}
+
+            {socials.length ? (
+              <div className="mt-14 flex flex-col gap-4 rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-[#D96B2B]">Stay connected</p>
+                  <h3 className="mt-1 font-serif text-xl font-bold text-[#0B1F33]">Follow Fable Journal</h3>
+                </div>
+                <SocialLinks links={socials} variant="light" />
+              </div>
+            ) : null}
 
             {/* Author Card */}
             <div className="mt-16 rounded-3xl border border-[#E7DDD2] bg-[#FFF9F2] overflow-hidden">

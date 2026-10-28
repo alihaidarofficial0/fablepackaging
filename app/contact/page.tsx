@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { Clock, Mail, MessageSquare, BookOpen, Send, Sparkles } from "lucide-react";
+import { Clock, Mail, MessageSquare, BookOpen, Sparkles } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
 import { Container } from "@/components/shared/Container";
+import { SocialLinks } from "@/components/SocialLinks";
 import { getSiteSettings } from "@/lib/content";
+import { normalizeSocialLinks } from "@/lib/social";
 
 export const metadata: Metadata = {
   title: "Contact the Editorial Desk | Fable Journal",
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
 
 export default async function ContactPage() {
   const settings = await getSiteSettings();
+  const socials = normalizeSocialLinks(settings.social_links, settings);
 
   return (
     <>
@@ -82,6 +85,13 @@ export default async function ContactPage() {
                     </div>
                   </div>
                 </div>
+
+                {socials.length ? (
+                  <div className="border-t border-[#E7DDD2] pt-6 space-y-3">
+                    <h3 className="font-serif text-base font-bold text-[#0B1F33]">Follow the journal</h3>
+                    <SocialLinks links={socials} variant="light" />
+                  </div>
+                ) : null}
 
                 <div className="border-t border-[#E7DDD2] pt-6 space-y-3">
                   <h3 className="font-serif text-base font-bold text-[#0B1F33] flex items-center gap-2">
