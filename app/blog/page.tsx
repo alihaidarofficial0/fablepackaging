@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Clock, BookOpen, TrendingUp } from "lucide-react";
 import { Container } from "@/components/shared/Container";
+import { Pagination } from "@/components/shared/Pagination";
 import { getPublishedBlogs, getCategories } from "@/app/admin/blog/actions";
 import { resolveBlogThumbnail, resolveBlogCover } from "@/lib/blogImage";
 
@@ -12,14 +13,27 @@ export const metadata: Metadata = {
     "The complete archive of packaging essays, material studies, dieline guides, and creative direction from Fable Packaging.",
 };
 
-export default async function BlogArchivePage() {
+const PAGE_SIZE = 20;
+
+export default async function BlogArchivePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = (await searchParams) || {};
+  const requestedPage = Math.max(1, Number.parseInt(pageParam || "1", 10) || 1);
+
   const [posts, categories] = await Promise.all([
     getPublishedBlogs(),
     getCategories(),
   ]);
 
   const featured = posts.find((p) => p.isFeatured || p.featured) || posts[0];
-  const list = featured ? posts.filter((p) => p.slug !== featured.slug) : posts.slice(1);
+  const allOther = featured ? posts.filter((p) => p.slug !== featured.slug) : posts.slice(1);
+  const total = allOther.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const list = allOther.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -214,6 +228,16 @@ export default async function BlogArchivePage() {
                   </div>
                 </article>
               ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-12 pt-8 border-t border-[#E7DDD2]">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                basePath="/blog"
+              />
             </div>
           )}
         </Container>

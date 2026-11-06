@@ -10,6 +10,7 @@ import {
   type HomepageSection,
 } from "@/lib/admin-homepage";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 const inputClass =
   "mt-1.5 h-11 w-full rounded-xl border border-[#E7DDD2] bg-[#FFFDF9] px-3.5 text-sm text-[#0B1F33] outline-none transition-colors placeholder:text-[#98A2B3] focus:border-[#D96B2B] focus:bg-white focus:ring-2 focus:ring-[#D96B2B]/10";
@@ -153,24 +154,37 @@ export default async function HomepageEditorPage() {
                           key={fieldKey}
                           className={isWide ? "md:col-span-2 space-y-1" : "space-y-1"}
                         >
-                          <label className="block text-xs font-bold uppercase tracking-wider text-[#0B1F33]">
-                            {label}
-                          </label>
-
-                          {inputType === "textarea" ? (
-                            <textarea
+                          {inputType === "image" ? (
+                            <ImageUploadField
                               name={fieldKey}
-                              rows={3}
+                              label={label}
                               defaultValue={currentVal}
-                              className={`${inputClass} h-auto py-2.5 font-normal leading-relaxed`}
+                              defaultSlug={`home-${fieldKey.replace(/_/g, "-")}`}
+                              folder="home"
+                              recommended="1920 × 1080 px"
                             />
                           ) : (
-                            <input
-                              name={fieldKey}
-                              type={inputType === "url" ? "url" : "text"}
-                              defaultValue={currentVal}
-                              className={inputClass}
-                            />
+                            <>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-[#0B1F33]">
+                                {label}
+                              </label>
+
+                              {inputType === "textarea" ? (
+                                <textarea
+                                  name={fieldKey}
+                                  rows={3}
+                                  defaultValue={currentVal}
+                                  className={`${inputClass} h-auto py-2.5 font-normal leading-relaxed`}
+                                />
+                              ) : (
+                                <input
+                                  name={fieldKey}
+                                  type={inputType === "url" ? "url" : "text"}
+                                  defaultValue={currentVal}
+                                  className={inputClass}
+                                />
+                              )}
+                            </>
                           )}
                         </div>
                       );

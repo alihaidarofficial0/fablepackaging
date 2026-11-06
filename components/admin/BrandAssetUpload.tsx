@@ -1,9 +1,10 @@
 "use client";
 
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Check } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "@/components/Toast";
-import { uploadClientImage } from "@/lib/uploadClientImage";
+import { uploadClientImage, applyImageSlug } from "@/lib/uploadClientImage";
+import { slugify } from "@/lib/brandedDownloads";
 
 export function BrandAssetUpload({
   name,
@@ -12,6 +13,7 @@ export function BrandAssetUpload({
   initialUrl = "",
   accept = "image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,.ico",
   preview = "logo",
+  defaultSlug,
 }: {
   name: string;
   label: string;
@@ -19,10 +21,12 @@ export function BrandAssetUpload({
   initialUrl?: string;
   accept?: string;
   preview?: "logo" | "favicon";
+  defaultSlug?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(initialUrl);
   const [uploading, setUploading] = useState(false);
+  const [slug, setSlug] = useState(() => defaultSlug || (preview === "favicon" ? "favicon" : "brand-logo"));
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -30,15 +34,35 @@ export function BrandAssetUpload({
 
     setUploading(true);
     try {
-      const result = await uploadClientImage(file);
+      const cleanSlug = slugify(slug);
+      const result = await uploadClientImage(file, cleanSlug || undefined, "uploads");
       if (result.success && result.imageUrl) {
         setUrl(result.imageUrl);
-        toast.success(`${label} uploaded.`);
+        toast.success(`${label} uploaded as "${cleanSlug}".`);
       } else {
         toast.error(result.error || `Could not upload ${label.toLowerCase()}.`);
       }
     } catch {
       toast.error(`Could not upload ${label.toLowerCase()}.`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleApplySlug() {
+    const cleanSlug = slugify(slug);
+    if (!url || !cleanSlug) return;
+    setUploading(true);
+    try {
+      const result = await applyImageSlug(url, cleanSlug, "uploads");
+      if (result.success && result.imageUrl) {
+        setUrl(result.imageUrl);
+        toast.success(`Image name updated to "${cleanSlug}".`);
+      } else {
+        toast.error(result.error || "Could not update image name.");
+      }
+    } catch {
+      toast.error("Could not update image name.");
     } finally {
       setUploading(false);
     }
@@ -54,6 +78,39 @@ export function BrandAssetUpload({
       <input type="hidden" name={name} value={url} readOnly />
       <span className="block text-sm font-bold text-[#0B1F33]">{label}</span>
       <p className="text-sm text-[#667085]">{hint}</p>
+
+      <div className="space-y-1">
+        <label className="block text-xs font-bold uppercase tracking-wider text-[#667085]">
+          Image Name (Slug)
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            onBlur={() => {
+              const cleaned = slugify(slug);
+              setSlug(cleaned);
+              if (url && cleaned) {
+                void handleApplySlug();
+              }
+            }}
+            placeholder="e.g. brand-logo"
+            className="flex-1 rounded-lg border border-[#D9D0C7] bg-white px-3 py-1.5 text-xs font-medium text-[#0B1F33] placeholder:text-[#98A2B3] outline-none focus:border-[#D96B2B]"
+          />
+          {url ? (
+            <button
+              type="button"
+              disabled={uploading || !slug}
+              onClick={() => void handleApplySlug()}
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-[#D96B2B] bg-white px-2.5 text-xs font-bold text-[#D96B2B] hover:bg-[#FFF0E2] disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+              Apply Name
+            </button>
+          ) : null}
+        </div>
+      </div>
 
       {url ? (
         <div className={`relative overflow-hidden rounded-xl border border-[#E7DDD2] bg-[#FFF9F2] ${frame}`}>

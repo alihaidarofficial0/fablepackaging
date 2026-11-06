@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -15,6 +15,7 @@ import {
   ArrowDown,
   X,
   ExternalLink,
+  Save,
 } from "lucide-react";
 import Link from "next/link";
 import { resolveBlogThumbnail, resolveBlogCover } from "@/lib/blogImage";
@@ -24,6 +25,7 @@ import { slugify } from "@/lib/brandedDownloads";
 import { toast } from "@/components/Toast";
 import type { TiptapEditorHandle } from "./TiptapEditor";
 import { normalizeBlogFaqs } from "@/lib/blogFaq";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), {
   ssr: false,
@@ -34,6 +36,14 @@ const TiptapEditor = dynamic(() => import("./TiptapEditor"), {
     </div>
   ),
 });
+
+const inputClass =
+  "mt-1.5 h-11 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 text-sm font-medium text-[#0B1F33] outline-none transition-colors placeholder:text-[#98A2B3] focus:border-[#D96B2B] focus:ring-2 focus:ring-[#D96B2B]/10";
+const textareaClass =
+  "mt-1.5 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 py-3 text-sm font-medium text-[#0B1F33] outline-none transition-colors placeholder:text-[#98A2B3] focus:border-[#D96B2B] focus:ring-2 focus:ring-[#D96B2B]/10 resize-y";
+const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#0B1F33]";
+const sectionTitleClass = "font-serif text-2xl text-[#0B1F33]";
+const sectionDescClass = "mt-1 text-sm text-[#667085]";
 
 interface BlogEditorProps {
   initialData?: any;
@@ -103,9 +113,24 @@ export default function BlogEditor({
   );
 
   const tiptapRef = useRef<TiptapEditorHandle>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const faqImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: Ctrl+S / Cmd+S to save immediately
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSubmitting) {
+          formRef.current?.requestSubmit();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSubmitting]);
 
   // Sync fields on initialData change
   useEffect(() => {
@@ -423,36 +448,66 @@ export default function BlogEditor({
   useEffect(() => setModalMounted(true), []);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-16">
-      {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E7DDD2] pb-6">
+    <div className="w-full max-w-none space-y-6 pb-20">
+      {/* Top Header matching settings layout */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-[#E7DDD2]">
         <div>
           <Link
             href="/admin/blog"
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#D96B2B] hover:text-[#BC5420] transition-colors mb-2"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[.14em] text-[#D96B2B] hover:text-[#BC5420] transition-colors mb-2"
           >
-            <ArrowLeft className="size-4" /> Back to Journal Posts
+            <ArrowLeft className="size-3.5" /> Back to Articles
           </Link>
-          <h1 className="font-serif text-3xl sm:text-4xl text-[#0B1F33]">
-            {isEdit ? "Edit Journal Article" : "Create New Article"}
+          <p className="text-xs font-extrabold uppercase tracking-[.16em] text-[#D96B2B]">
+            Journal / {isEdit ? "Edit" : "New"}
+          </p>
+          <h1 className="mt-1 font-serif text-2xl text-[#0B1F33] sm:text-3xl">
+            {isEdit ? "Edit Article" : "Create Article"}
           </h1>
+          <p className="mt-1.5 max-w-2xl text-xs text-[#667085] truncate">
+            {isEdit
+              ? initialData?.title
+                ? initialData.title
+                : "Edit and update journal publication."
+              : "Draft and publish a new editorial journal article."}
+          </p>
         </div>
-        {isEdit && initialData?.slug && (
-          <Link
-            href={`/blog/${initialData.slug}`}
-            target="_blank"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#E7DDD2] bg-white text-xs font-bold uppercase tracking-wider text-[#0B1F33] hover:border-[#D96B2B] hover:text-[#D96B2B] transition-colors"
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+              status === "Published"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-amber-50 text-amber-700 border border-amber-200"
+            }`}
           >
-            View Live <ExternalLink className="size-3.5" />
-          </Link>
-        )}
+            <span
+              className={`size-1.5 rounded-full ${
+                status === "Published" ? "bg-emerald-600" : "bg-amber-600"
+              }`}
+            />
+            {status}
+          </span>
+          {isEdit && initialData?.slug && (
+            <Link
+              href={`/blog/${initialData.slug}`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#E7DDD2] bg-white text-xs font-bold text-[#0B1F33] hover:border-[#D96B2B] hover:text-[#D96B2B] transition-colors shadow-xs"
+            >
+              View Live <ExternalLink className="size-3.5" />
+            </Link>
+          )}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-8">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* SECTION 1: General Info */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-6">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-6 shadow-xs">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[#F0EAE2]">
-            <h3 className="font-serif text-xl font-bold text-[#0B1F33]">General Information</h3>
+            <div>
+              <h2 className={sectionTitleClass}>General Information</h2>
+              <p className={sectionDescClass}>Basic metadata, publication status, category, and author details.</p>
+            </div>
             <div className="flex flex-wrap items-center gap-5">
               {/* Featured checkbox */}
               <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -462,7 +517,7 @@ export default function BlogEditor({
                   onChange={(e) => setIsFeatured(e.target.checked)}
                   className="size-4 rounded border-[#D9D0C7] text-[#D96B2B] focus:ring-[#D96B2B] accent-[#D96B2B] cursor-pointer"
                 />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0B1F33]">
                   Featured Post
                 </span>
               </label>
@@ -475,20 +530,20 @@ export default function BlogEditor({
                   onChange={(e) => setIsLatest(e.target.checked)}
                   className="size-4 rounded border-[#D9D0C7] text-[#D96B2B] focus:ring-[#D96B2B] accent-[#D96B2B] cursor-pointer"
                 />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0B1F33]">
                   Latest Post
                 </span>
               </label>
 
               {/* Status */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0B1F33]">
                   Status
                 </span>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="bg-[#FFF9F2] border border-[#E7DDD2] rounded-xl px-3 py-1.5 text-xs font-bold text-[#0B1F33] outline-none focus:border-[#D96B2B] cursor-pointer"
+                  className="bg-white border border-[#E7DDD2] rounded-xl px-3 py-1.5 text-xs font-bold text-[#0B1F33] outline-none focus:border-[#D96B2B] cursor-pointer"
                 >
                   <option value="Published">Published</option>
                   <option value="Draft">Draft</option>
@@ -498,8 +553,8 @@ export default function BlogEditor({
           </div>
 
           {/* Title */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+          <div>
+            <label className={labelClass}>
               Article Title *
             </label>
             <input
@@ -512,15 +567,15 @@ export default function BlogEditor({
                 }
               }}
               placeholder="e.g. The Craft of Sustainable Folding Cartons in Modern Retail"
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-lg font-serif font-bold text-[#0B1F33] outline-none focus:border-[#D96B2B] focus:ring-2 focus:ring-[#D96B2B]/10"
+              className={inputClass}
             />
           </div>
 
           {/* Category & Author */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+            <div>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+                <label className={labelClass}>
                   Category *
                 </label>
                 <button
@@ -534,7 +589,7 @@ export default function BlogEditor({
               </div>
 
               {showInlineCat ? (
-                <div className="flex items-center gap-2 p-2 bg-[#FFF4E9] border border-[#D96B2B]/30 rounded-xl">
+                <div className="mt-1.5 flex items-center gap-2 p-2 bg-[#FFF4E9] border border-[#D96B2B]/30 rounded-xl">
                   <input
                     type="text"
                     value={inlineCatName}
@@ -563,7 +618,7 @@ export default function BlogEditor({
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-semibold text-[#0B1F33] outline-none focus:border-[#D96B2B] cursor-pointer"
+                  className={inputClass}
                 >
                   <option value="">Select Category…</option>
                   {categoryOptions.map((cat, i) => (
@@ -574,8 +629,8 @@ export default function BlogEditor({
                 </select>
               )}
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
+            <div>
+              <label className={labelClass}>
                 Author Name *
               </label>
               <input
@@ -584,7 +639,7 @@ export default function BlogEditor({
                 onChange={(e) => setAuthor(e.target.value)}
                 required
                 placeholder="e.g. Eleanor Vance, Design Director"
-                className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-semibold text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className={inputClass}
               />
             </div>
           </div>
@@ -592,187 +647,51 @@ export default function BlogEditor({
           {/* SECTION 2: Images (Thumbnail & Cover) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#F0EAE2]">
             {/* Thumbnail */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Thumbnail Image (Cards & Lists)
-                </label>
-                <div className="flex rounded-lg border border-[#E7DDD2] overflow-hidden text-[10px] font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setThumbnailUploadMethod("file")}
-                    className={`px-2.5 py-1 ${
-                      thumbnailUploadMethod === "file"
-                        ? "bg-[#D96B2B] text-white"
-                        : "bg-[#FFF9F2] text-[#667085]"
-                    }`}
-                  >
-                    Upload
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setThumbnailUploadMethod("url")}
-                    className={`px-2.5 py-1 ${
-                      thumbnailUploadMethod === "url"
-                        ? "bg-[#D96B2B] text-white"
-                        : "bg-[#FFF9F2] text-[#667085]"
-                    }`}
-                  >
-                    URL
-                  </button>
-                </div>
-              </div>
-
-              {imageUrl ? (
-                <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-[#E7DDD2] group bg-[#F3E8DA]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={thumbnailPreview}
-                    alt="Thumbnail preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setImageUrl("")}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider transition-opacity cursor-pointer"
-                  >
-                    Remove Image
-                  </button>
-                </div>
-              ) : thumbnailUploadMethod === "file" ? (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => !uploadingImage && thumbnailInputRef.current?.click()}
-                  className="aspect-[16/10] border-2 border-dashed border-[#D9D0C7] rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF9F2] transition-colors text-center"
-                >
-                  <ImageIcon className="size-8 text-[#D96B2B] mb-2" />
-                  <span className="text-xs font-bold text-[#0B1F33]">
-                    {uploadingImage ? "Uploading…" : "Click to Upload Thumbnail"}
-                  </span>
-                  <span className="text-[10px] text-[#667085] mt-1">Recommended: 800×500 px</span>
-                  <input
-                    ref={thumbnailInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, "thumbnail")}
-                  />
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/…"
-                  className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs font-mono text-[#0B1F33] outline-none focus:border-[#D96B2B]"
-                />
-              )}
-
+            <div className="space-y-2">
+              <ImageUploadField
+                label="Thumbnail Image (Blog Listing Card)"
+                value={imageUrl}
+                onChange={setImageUrl}
+                defaultSlug={slug ? `${slug}-thumb` : "blog-thumb"}
+                folder="collections/blog_posts"
+                recommended="800 × 500 px"
+              />
               <input
                 type="text"
                 value={imageAlt}
                 onChange={(e) => setImageAlt(e.target.value)}
                 placeholder="Thumbnail image alt text (SEO)"
-                className="w-full px-4 py-2.5 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className="mt-1 h-10 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 text-xs font-medium text-[#0B1F33] outline-none transition-colors placeholder:text-[#98A2B3] focus:border-[#D96B2B]"
               />
             </div>
 
             {/* Cover Image */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                  Cover Image (Article Detail Hero)
-                </label>
-                <div className="flex rounded-lg border border-[#E7DDD2] overflow-hidden text-[10px] font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setCoverUploadMethod("file")}
-                    className={`px-2.5 py-1 ${
-                      coverUploadMethod === "file"
-                        ? "bg-[#D96B2B] text-white"
-                        : "bg-[#FFF9F2] text-[#667085]"
-                    }`}
-                  >
-                    Upload
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCoverUploadMethod("url")}
-                    className={`px-2.5 py-1 ${
-                      coverUploadMethod === "url"
-                        ? "bg-[#D96B2B] text-white"
-                        : "bg-[#FFF9F2] text-[#667085]"
-                    }`}
-                  >
-                    URL
-                  </button>
-                </div>
-              </div>
-
-              {coverImageUrl ? (
-                <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-[#E7DDD2] group bg-[#F3E8DA]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverPreview}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setCoverImageUrl("")}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider transition-opacity cursor-pointer"
-                  >
-                    Remove Cover
-                  </button>
-                </div>
-              ) : coverUploadMethod === "file" ? (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => !uploadingCover && coverInputRef.current?.click()}
-                  className="aspect-[16/10] border-2 border-dashed border-[#D9D0C7] rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF9F2] transition-colors text-center"
-                >
-                  <ImageIcon className="size-8 text-[#D96B2B] mb-2" />
-                  <span className="text-xs font-bold text-[#0B1F33]">
-                    {uploadingCover ? "Uploading…" : "Click to Upload Hero Cover"}
-                  </span>
-                  <span className="text-[10px] text-[#667085] mt-1">Recommended: 1600×900 px</span>
-                  <input
-                    ref={coverInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, "cover")}
-                  />
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/…"
-                  className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs font-mono text-[#0B1F33] outline-none focus:border-[#D96B2B]"
-                />
-              )}
-
+            <div className="space-y-2">
+              <ImageUploadField
+                label="Cover Image (Article Detail Hero)"
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                defaultSlug={slug ? `${slug}-cover` : "blog-cover"}
+                folder="collections/blog_posts"
+                recommended="1600 × 900 px"
+              />
               <input
                 type="text"
                 value={coverImageAlt}
                 onChange={(e) => setCoverImageAlt(e.target.value)}
                 placeholder="Hero cover image alt text (SEO)"
-                className="w-full px-4 py-2.5 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className="mt-1 h-10 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 text-xs font-medium text-[#0B1F33] outline-none transition-colors placeholder:text-[#98A2B3] focus:border-[#D96B2B]"
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* SECTION 3: Content Body & Button Creator */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#F0EAE2]">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-[#F0EAE2]">
             <div>
-              <h3 className="font-serif text-xl font-bold text-[#0B1F33]">Article Content</h3>
-              <p className="text-xs text-[#667085] mt-0.5">
+              <h2 className={sectionTitleClass}>Article Content</h2>
+              <p className={sectionDescClass}>
                 Format your story, insert high-res photography, tables, blockquotes, and custom CTA action buttons.
               </p>
             </div>
@@ -791,14 +710,14 @@ export default function BlogEditor({
             onChange={(newHtml) => setContent(newHtml)}
             onCreateButton={() => setIsModalOpen(true)}
           />
-        </div>
+        </section>
 
         {/* SECTION 4: PDF & Downloadable File Library */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#F0EAE2]">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-[#F0EAE2]">
             <div>
-              <h3 className="font-serif text-xl font-bold text-[#0B1F33]">PDF & Downloadable Files Library</h3>
-              <p className="text-xs text-[#667085] mt-0.5">
+              <h2 className={sectionTitleClass}>PDF &amp; Files Library</h2>
+              <p className={sectionDescClass}>
                 Upload PDFs, checklists, and guides here. You can then attach them to CTA buttons inside your articles.
               </p>
             </div>
@@ -846,132 +765,98 @@ export default function BlogEditor({
               No documents uploaded yet. Upload a PDF or guide above.
             </p>
           )}
-        </div>
+        </section>
 
         {/* SECTION 5: Video Embed (Optional) */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-4">
-          <div className="border-b border-[#F0EAE2] pb-3">
-            <h3 className="font-serif text-xl font-bold text-[#0B1F33]">Featured Video (Optional)</h3>
-            <p className="text-xs text-[#667085] mt-0.5">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-6 shadow-xs">
+          <div className="border-b border-[#F0EAE2] pb-4">
+            <h2 className={sectionTitleClass}>Featured Video <span className="text-base font-normal text-[#98A2B3]">(Optional)</span></h2>
+            <p className={sectionDescClass}>
               Embed a YouTube or Vimeo clip that automatically appears below the article body.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Video URL
-              </label>
+            <div>
+              <label className={labelClass}>Video URL</label>
               <input
                 type="url"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=…"
-                className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className={inputClass}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Video Section Title
-              </label>
+            <div>
+              <label className={labelClass}>Video Section Title</label>
               <input
                 type="text"
                 value={videoTitle}
                 onChange={(e) => setVideoTitle(e.target.value)}
                 placeholder="e.g. Watch: Unboxing the Sustainable Rigid Box"
-                className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className={inputClass}
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* SECTION 6: Per-Post FAQ Section (Optional) */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-6">
-          <div className="border-b border-[#F0EAE2] pb-3">
-            <h3 className="font-serif text-xl font-bold text-[#0B1F33]">Article FAQ Section (Optional)</h3>
-            <p className="text-xs text-[#667085] mt-0.5">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-6 shadow-xs">
+          <div className="border-b border-[#F0EAE2] pb-4">
+            <h2 className={sectionTitleClass}>Article FAQs <span className="text-base font-normal text-[#98A2B3]">(Optional)</span></h2>
+            <p className={sectionDescClass}>
               Add frequently asked questions specific to this post. Appears at the bottom of the article.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                FAQ Section Title
-              </label>
+            <div>
+              <label className={labelClass}>FAQ Section Title</label>
               <input
                 type="text"
                 value={faqTitle}
                 onChange={(e) => setFaqTitle(e.target.value)}
                 placeholder="e.g. Frequently Asked Questions"
-                className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className={inputClass}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                FAQ Section Description
-              </label>
+            <div>
+              <label className={labelClass}>FAQ Section Description</label>
               <input
                 type="text"
                 value={faqDescription}
                 onChange={(e) => setFaqDescription(e.target.value)}
                 placeholder="Optional short introductory line"
-                className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                className={inputClass}
               />
             </div>
           </div>
 
           {/* FAQ Image */}
-          <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              FAQ Image (Optional)
-            </label>
-            <div className="flex items-center gap-4">
-              {faqImage ? (
-                <div className="relative size-20 rounded-xl overflow-hidden border border-[#E7DDD2]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={faqImage} alt="FAQ preview" className="size-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setFaqImage("")}
-                    className="absolute inset-0 bg-black/60 text-white text-[10px] font-bold flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={uploadingFaqImage}
-                  onClick={() => faqImageInputRef.current?.click()}
-                  className="px-4 py-2.5 rounded-xl border border-dashed border-[#D9D0C7] bg-[#FFF9F2] text-xs font-bold uppercase tracking-wider text-[#D96B2B] hover:bg-[#FFF0E2] transition-colors"
-                >
-                  {uploadingFaqImage ? "Uploading…" : "+ Upload FAQ Image"}
-                </button>
-              )}
+          <div className="space-y-2">
+            <ImageUploadField
+              label="FAQ Side Image (Optional)"
+              value={faqImage}
+              onChange={setFaqImage}
+              defaultSlug={slug ? `${slug}-faq` : "blog-faq"}
+              folder="collections/blog_posts"
+              recommended="600 x 600 px"
+            />
+            {faqImage && (
               <input
-                ref={faqImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleImageUpload(e, "faq")}
+                type="text"
+                value={faqImageAlt}
+                onChange={(e) => setFaqImageAlt(e.target.value)}
+                placeholder="FAQ Image alt text"
+                className="mt-1 h-10 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 text-xs font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
               />
-              {faqImage && (
-                <input
-                  type="text"
-                  value={faqImageAlt}
-                  onChange={(e) => setFaqImageAlt(e.target.value)}
-                  placeholder="FAQ Image alt text"
-                  className="flex-1 px-4 py-2.5 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs"
-                />
-              )}
-            </div>
+            )}
           </div>
 
           {/* Questions list */}
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Questions & Answers ({faqs.length})
+              <span className={labelClass}>
+                Questions &amp; Answers ({faqs.length})
               </span>
               <button
                 type="button"
@@ -998,30 +883,13 @@ export default function BlogEditor({
                         Question #{index + 1}
                       </span>
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => moveFaq(index, "up")}
-                          disabled={index === 0}
-                          className="p-1 text-[#667085] hover:text-[#0B1F33] disabled:opacity-30 cursor-pointer"
-                          title="Move up"
-                        >
+                        <button type="button" onClick={() => moveFaq(index, "up")} disabled={index === 0} className="p-1 text-[#667085] hover:text-[#0B1F33] disabled:opacity-30 cursor-pointer" title="Move up">
                           <ArrowUp className="size-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => moveFaq(index, "down")}
-                          disabled={index === faqs.length - 1}
-                          className="p-1 text-[#667085] hover:text-[#0B1F33] disabled:opacity-30 cursor-pointer"
-                          title="Move down"
-                        >
+                        <button type="button" onClick={() => moveFaq(index, "down")} disabled={index === faqs.length - 1} className="p-1 text-[#667085] hover:text-[#0B1F33] disabled:opacity-30 cursor-pointer" title="Move down">
                           <ArrowDown className="size-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFaq(index)}
-                          className="p-1 text-[#DC3545] hover:bg-[#FFF1F0] rounded cursor-pointer"
-                          title="Remove question"
-                        >
+                        <button type="button" onClick={() => removeFaq(index)} className="p-1 text-[#DC3545] hover:bg-[#FFF1F0] rounded cursor-pointer" title="Remove question">
                           <Trash2 className="size-3.5" />
                         </button>
                       </div>
@@ -1031,74 +899,67 @@ export default function BlogEditor({
                       value={faq.question}
                       onChange={(e) => updateFaq(index, "question", e.target.value)}
                       placeholder="e.g. Can this packaging withstand international freight?"
-                      className="w-full px-4 py-2.5 bg-white border border-[#E7DDD2] rounded-lg text-sm font-semibold text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+                      className="h-10 w-full rounded-lg border border-[#E7DDD2] bg-white px-3.5 text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
                     />
                     <textarea
                       rows={2}
                       value={faq.answer}
                       onChange={(e) => updateFaq(index, "answer", e.target.value)}
-                      placeholder="Answer details…"
-                      className="w-full px-4 py-2.5 bg-white border border-[#E7DDD2] rounded-lg text-sm text-[#0B1F33] outline-none focus:border-[#D96B2B] resize-none"
+                      placeholder="Answer details..."
+                      className="w-full rounded-lg border border-[#E7DDD2] bg-white px-3.5 py-2.5 text-sm text-[#0B1F33] outline-none focus:border-[#D96B2B] resize-none"
                     />
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* SECTION 7: SEO Settings */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E7DDD2] shadow-sm space-y-6">
-          <div className="border-b border-[#F0EAE2] pb-3">
-            <h3 className="font-serif text-xl font-bold text-[#0B1F33]">SEO & Search Settings (Optional)</h3>
-            <p className="text-xs text-[#667085] mt-0.5">
+        <section className="rounded-2xl border border-[#E7DDD2] bg-white p-5 sm:p-7 space-y-6 shadow-xs">
+          <div className="border-b border-[#F0EAE2] pb-4">
+            <h2 className={sectionTitleClass}>SEO Settings <span className="text-base font-normal text-[#98A2B3]">(Optional)</span></h2>
+            <p className={sectionDescClass}>
               Customize title tags, descriptions, custom slugs, and robots indexing behavior.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              SEO Title
-            </label>
+
+          <div>
+            <label className={labelClass}>SEO Title</label>
             <input
               name="seoTitle"
               defaultValue={initialData?.seo_title || initialData?.seoTitle || ""}
               placeholder="e.g. Sustainable Packaging Ideas & Structural Advice | Fable Journal"
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+              className={inputClass}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              SEO Meta Description
-            </label>
+          <div>
+            <label className={labelClass}>SEO Meta Description</label>
             <textarea
               name="seoDescription"
               rows={2}
               defaultValue={initialData?.seo_description || initialData?.seoDescription || ""}
-              placeholder="A concise summary of this post for search engine result snippets…"
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B] resize-none"
+              placeholder="A concise summary of this post for search engine result snippets..."
+              className={textareaClass}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              SEO Keywords (Comma Separated)
-            </label>
+          <div>
+            <label className={labelClass}>SEO Keywords <span className="font-normal normal-case tracking-normal text-[#98A2B3]">(comma separated)</span></label>
             <input
               name="seoKeywords"
               defaultValue={initialData?.seo_keywords || initialData?.seoKeywords || ""}
               placeholder="sustainable packaging, custom boxes, materials guide"
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+              className={inputClass}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              Custom URL Slug
-            </label>
-            <div className="flex rounded-xl border border-[#E7DDD2] overflow-hidden bg-[#FFFDF9]">
-              <span className="px-4 py-3 text-xs font-mono font-bold text-[#667085] bg-[#FFF9F2] border-r border-[#E7DDD2] select-none">
+          <div>
+            <label className={labelClass}>Custom URL Slug</label>
+            <div className="mt-1.5 flex rounded-xl border border-[#E7DDD2] overflow-hidden bg-white">
+              <span className="px-4 py-3 text-xs font-mono font-bold text-[#667085] bg-[#F9F5F0] border-r border-[#E7DDD2] select-none">
                 /blog/
               </span>
               <input
@@ -1109,40 +970,36 @@ export default function BlogEditor({
                   setSlug(slugify(e.target.value));
                 }}
                 placeholder="post-url-slug"
-                className="flex-1 px-4 py-3 text-xs font-mono text-[#0B1F33] outline-none"
+                className="flex-1 px-4 py-3 text-xs font-mono text-[#0B1F33] outline-none bg-transparent"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              Canonical URL
-            </label>
+          <div>
+            <label className={labelClass}>Canonical URL</label>
             <input
               name="canonicalLink"
               type="text"
               defaultValue={initialData?.canonical_link || initialData?.canonicalLink || ""}
               placeholder="https://fablepack.co/blog/your-post-slug"
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-sm font-medium text-[#0B1F33] outline-none focus:border-[#D96B2B]"
+              className={inputClass}
             />
           </div>
 
           {/* Search Indexing */}
-          <div className="space-y-2 pt-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085] block">
-              Search Engine Indexing
-            </label>
-            <p className="text-xs text-[#667085]">
-              Choose &ldquo;No&rdquo; to add a noindex tag — the article remains readable on your site but Google will not index it.
+          <div>
+            <label className={`${labelClass} mb-1`}>Search Engine Indexing</label>
+            <p className="mt-1 mb-3 text-xs text-[#667085]">
+              Choose &ldquo;No&rdquo; to add a noindex tag &mdash; the article stays readable but won&apos;t be indexed by Google.
             </p>
-            <div className="flex rounded-xl border border-[#E7DDD2] overflow-hidden w-fit mt-2">
+            <div className="flex rounded-xl border border-[#E7DDD2] overflow-hidden w-fit">
               <button
                 type="button"
                 onClick={() => setNoIndex(false)}
-                className={`px-5 py-2 text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
                   !noIndex
                     ? "bg-[#D96B2B] text-white"
-                    : "bg-[#FFF9F2] text-[#667085] hover:bg-[#FFF0E2]"
+                    : "bg-white text-[#667085] hover:bg-[#FFF0E2]"
                 }`}
               >
                 Yes (Indexable)
@@ -1150,10 +1007,10 @@ export default function BlogEditor({
               <button
                 type="button"
                 onClick={() => setNoIndex(true)}
-                className={`px-5 py-2 text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors border-l border-[#E7DDD2] ${
                   noIndex
                     ? "bg-[#D96B2B] text-white"
-                    : "bg-[#FFF9F2] text-[#667085] hover:bg-[#FFF0E2]"
+                    : "bg-white text-[#667085] hover:bg-[#FFF0E2]"
                 }`}
               >
                 No (noindex)
@@ -1162,44 +1019,54 @@ export default function BlogEditor({
           </div>
 
           {/* Custom Schema Script */}
-          <div className="space-y-2 pt-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-              Custom Schema Script (JSON-LD)
-            </label>
+          <div>
+            <label className={labelClass}>Custom Schema Script <span className="font-normal normal-case tracking-normal text-[#98A2B3]">(JSON-LD)</span></label>
             <textarea
               name="schemaScript"
               rows={3}
               defaultValue={initialData?.schema_script || initialData?.schemaScript || ""}
-              placeholder='<script type="application/ld+json"> { "@context": "https://schema.org", ... } </script>'
-              className="w-full px-4 py-3 bg-[#FFFDF9] border border-[#E7DDD2] rounded-xl text-xs font-mono text-[#0B1F33] outline-none focus:border-[#D96B2B] resize-none"
+              placeholder={`<script type="application/ld+json"> { "@context": "https://schema.org", ... } </script>`}
+              className="mt-1.5 w-full rounded-xl border border-[#E7DDD2] bg-white px-3.5 py-3 text-xs font-mono text-[#0B1F33] outline-none transition-colors focus:border-[#D96B2B] resize-y"
             />
           </div>
-        </div>
+        </section>
 
-        {/* Footer actions */}
-        <div className="flex items-center justify-end gap-4 pt-4">
-          <Link
-            href="/admin/blog"
-            className="px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#667085] hover:bg-[#FFF9F2] transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isSubmitting || uploadingImage || uploadingCover}
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-[#D96B2B] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#BC5420] transition-all shadow-md shadow-[#D96B2B]/20 cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                <span>Saving…</span>
-              </>
-            ) : isEdit ? (
-              "Save Changes"
-            ) : (
-              "Publish Article"
-            )}
-          </button>
+        {/* Sticky Save Changes Bar — Matching Settings page */}
+        <div className="sticky bottom-6 z-20 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#E7DDD2] bg-[#FFFDF9]/95 p-4 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <span className="text-xs leading-5 text-[#667085]">
+              Make edits above, then click Save Changes so the public journal updates.
+            </span>
+            <span className="hidden md:inline text-xs text-[#98A2B3]">
+              · Press <kbd className="rounded border border-[#E7DDD2] bg-white px-1.5 py-0.5 font-mono text-[10px] text-[#0B1F33]">Ctrl+S</kbd> to save
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/blog"
+              className="inline-flex h-11 items-center px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-[#667085] hover:bg-white hover:text-[#0B1F33] transition-colors"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={isSubmitting || uploadingImage || uploadingCover || uploadingFaqImage}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#D96B2B] px-6 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-[#D96B2B]/20 transition-all hover:bg-[#BC5420] disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Saving…</span>
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  <span>{isEdit ? "Save Changes" : "Publish Article"}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
 

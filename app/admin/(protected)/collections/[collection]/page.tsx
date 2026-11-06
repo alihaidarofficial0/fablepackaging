@@ -11,6 +11,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { DatabaseSetupNotice } from "@/components/admin/DatabaseSetupNotice";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 const collectionLabels: Record<CollectionName, string> = {
   products: "Products",
@@ -33,40 +34,27 @@ function ImageFields({
   item,
   optional = false,
   recommendation,
+  collection,
 }: {
   item: Row;
   optional?: boolean;
   recommendation?: string;
+  collection?: CollectionName;
 }) {
+  const currentUrl = String(item.image || item.avatar || "");
+  const defaultSlug = String(item.slug || item.name || item.title || item.customer_name || "");
+
   return (
-    <>
-      <label className="sm:col-span-2 text-sm font-bold">
-        {optional ? "Optional image URL" : "Image URL"}
-        <input
-          name="image"
-          defaultValue={String(item.image || "")}
-          placeholder="/images/products/example.webp"
-          className={inputClass}
-        />
-      </label>
-      <label className="sm:col-span-2 text-sm font-bold">
-        {item.image ? "Upload a replacement image" : "Upload an image"}
-        <input
-          name="image_file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-          className="mt-1.5 block w-full rounded-lg border border-[#D9D0C7] bg-white p-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-[#FFF0E2] file:px-4 file:py-2 file:font-bold file:text-[#D96B2B] hover:file:bg-[#FFE2C7]"
-        />
-        {recommendation ? (
-          <span className="mt-2 block rounded-md border border-[#E8C9AA] bg-[#FFF8F1] px-3 py-2 text-xs font-normal leading-5 text-[#70401F]">
-            <b className="font-bold">Recommended image:</b> {recommendation}
-          </span>
-        ) : null}
-        <span className="mt-1.5 block text-xs font-normal text-[#667085]">
-          JPG, PNG, WebP, AVIF, or GIF. Maximum 10 MB. A selected file replaces the URL above.
-        </span>
-      </label>
-    </>
+    <div className="sm:col-span-2">
+      <ImageUploadField
+        name="image"
+        label={optional ? "Image (optional)" : "Image"}
+        defaultValue={currentUrl}
+        defaultSlug={defaultSlug}
+        folder={collection ? `collections/${collection}` : "uploads"}
+        recommended={recommendation}
+      />
+    </div>
   );
 }
 
@@ -89,7 +77,7 @@ function CollectionForm({ collection, item = {} }: { collection: CollectionName;
           <label className="text-sm font-bold">Label<input name="label" required defaultValue={String(item.label || "")} className={inputClass} /></label>
           <label className="sm:col-span-2 text-sm font-bold">Link URL<input name="href" required defaultValue={String(item.href || "")} placeholder="/about" className={inputClass} /></label>
           <label className="sm:col-span-2 text-sm font-bold">Description<textarea name="description" rows={3} defaultValue={String(item.description || "")} className={textareaClass} /></label>
-          <ImageFields item={item} optional />
+          <ImageFields item={item} optional collection={collection} />
           <label className="text-sm font-bold">Parent item ID <span className="font-normal text-[#98A2B3]">(optional)</span><input name="parent_id" defaultValue={String(item.parent_id || "")} placeholder="Leave blank for top level" className={inputClass} /></label>
           <label className="flex items-end gap-2 pb-3 text-sm font-bold"><input name="open_in_new_tab" type="checkbox" defaultChecked={Boolean(item.open_in_new_tab)} className="size-4 accent-[#D96B2B]" />Open in new tab</label>
         </>
@@ -107,6 +95,7 @@ function CollectionForm({ collection, item = {} }: { collection: CollectionName;
           </div>
           <ImageFields
             item={item}
+            collection={collection}
             recommendation="1600 × 900 px (16:9). Minimum 1200 × 675 px. Keep important content near the center because listing cards may crop the outer edges."
           />
           <label className="sm:col-span-2 text-sm font-bold">Image alt text<input name="alt" required defaultValue={String(item.alt || "")} className={inputClass} /></label>
@@ -120,7 +109,7 @@ function CollectionForm({ collection, item = {} }: { collection: CollectionName;
           <label className="text-sm font-bold">Role<input name="role" defaultValue={String(item.role || "")} className={inputClass} /></label>
           <label className="text-sm font-bold">Rating<select name="rating" defaultValue={String(item.rating || 5)} className={inputClass}>{[5,4,3,2,1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}</select></label>
           <label className="sm:col-span-2 text-sm font-bold">Quote<textarea name="quote" required rows={5} defaultValue={String(item.quote || "")} className={textareaClass} /></label>
-          <ImageFields item={{ ...item, image: item.avatar }} optional />
+          <ImageFields item={{ ...item, image: item.avatar }} optional collection={collection} />
         </>
       ) : (
         <>
@@ -136,7 +125,7 @@ function CollectionForm({ collection, item = {} }: { collection: CollectionName;
           {collection === "projects" ? <label className="sm:col-span-2 text-sm font-bold">Category<input name="category" defaultValue={String(item.category || "")} className={inputClass} /></label> : null}
           {collection === "projects" ? <><label className="text-sm font-bold">Client / brand name<input name="client_name" defaultValue={String(item.client_name || "")} className={inputClass} /></label><label className="text-sm font-bold">Industry<input name="industry" defaultValue={String(item.industry || "")} className={inputClass} /></label><label className="sm:col-span-2 text-sm font-bold">Packaging type<input name="packaging_type" defaultValue={String(item.packaging_type || "")} className={inputClass} /></label><label className="sm:col-span-2 text-sm font-bold">Gallery image URLs <span className="font-normal text-[#98A2B3]">(comma separated)</span><input name="gallery" defaultValue={Array.isArray(item.gallery) ? item.gallery.join(", ") : ""} className={inputClass} /></label></> : null}
           <label className="sm:col-span-2 text-sm font-bold">Description<textarea name="description" rows={4} defaultValue={String(item.description || "")} className={textareaClass} /></label>
-          <ImageFields item={item} />
+          <ImageFields item={item} collection={collection} />
           <label className="sm:col-span-2 text-sm font-bold">Image alt text<input name="alt" required defaultValue={String(item.alt || "")} className={inputClass} /></label>
           {collection === "products" ? <label className="text-sm font-bold">Badge<select name="badge" defaultValue={String(item.badge || "")} className={inputClass}><option value="">No badge</option><option>Popular</option><option>Luxury</option><option>Flexible</option></select></label> : null}
           {collection === "projects" ? <><label className="sm:col-span-2 text-sm font-bold">SEO title<input name="seo_title" defaultValue={String(item.seo_title || "")} className={inputClass} /></label><label className="sm:col-span-2 text-sm font-bold">SEO description<textarea name="seo_description" rows={3} defaultValue={String(item.seo_description || "")} className={textareaClass} /></label></> : null}

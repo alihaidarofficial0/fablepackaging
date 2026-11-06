@@ -12,6 +12,8 @@ import {
   FileText,
   Search,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   getBlogs,
@@ -22,10 +24,37 @@ import {
 import { resolveBlogThumbnail } from "@/lib/blogImage";
 import { toast } from "@/components/Toast";
 
+const PAGE_SIZE = 20;
+
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const pages = new Set<number>([1, total, current, current - 1, current + 1]);
+  if (current <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  }
+  if (current >= total - 2) {
+    pages.add(total - 1);
+    pages.add(total - 2);
+    pages.add(total - 3);
+  }
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("…");
+    out.push(sorted[i]);
+  }
+  return out;
+}
+
 export default function BlogAdminPage() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadPosts = async () => {
     setLoading(true);
@@ -43,6 +72,10 @@ export default function BlogAdminPage() {
   useEffect(() => {
     loadPosts();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleToggleStatus = async (slug: string) => {
     const res = await toggleBlogStatus(slug);
@@ -88,6 +121,12 @@ export default function BlogAdminPage() {
     );
   });
 
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const paginated = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -99,8 +138,9 @@ export default function BlogAdminPage() {
           <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-[#0B1F33]">
             Journal Articles
           </h1>
-          <p className="mt-3 text-sm text-[#667085]">
-            Publish thoughtful guides, essays, and stories for your readers.
+          <p className="mt-2 text-sm text-[#667085]">
+            {total} {total === 1 ? "article" : "articles"} · {PAGE_SIZE} per page
+            {totalPages > 1 ? ` · Page ${safePage} of ${totalPages}` : ""}
           </p>
         </div>
 
@@ -217,7 +257,7 @@ export default function BlogAdminPage() {
                     </tr>
                   ))
                 ) : (
-                  filtered.map((blog) => {
+                  paginated.map((blog) => {
                     const thumb = resolveBlogThumbnail(blog.image, blog.coverImage || blog.cover_image);
                     const isPublished = blog.status === "Published" || !blog.status;
                     const isFeat = blog.isFeatured || blog.featured;
@@ -327,6 +367,63 @@ export default function BlogAdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {!loading && totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#E7DDD2] bg-[#FFFDF9] px-6 py-4">
+            <span className="text-xs font-medium text-[#667085]">
+              Showing <strong className="font-bold text-[#0B1F33]">{startIndex + 1}</strong> to{" "}
+              <strong className="font-bold text-[#0B1F33]">{Math.min(startIndex + PAGE_SIZE, total)}</strong> of{" "}
+              <strong className="font-bold text-[#0B1F33]">{total}</strong> articles
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#E7DDD2] bg-white px-3 text-xs font-bold uppercase tracking-wider text-[#0B1F33] transition-colors hover:border-[#D96B2B] hover:text-[#D96B2B] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer shadow-xs"
+              >
+                <ChevronLeft className="size-4" />
+                <span>Prev</span>
+              </button>
+
+              {getPageNumbers(safePage, totalPages).map((p, idx) =>
+                p === "…" ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="inline-flex size-9 items-center justify-center text-xs font-bold text-[#98A2B3]"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCurrentPage(p)}
+                    className={`inline-flex size-9 items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      p === safePage
+                        ? "bg-[#D96B2B] text-white shadow-xs"
+                        : "border border-[#E7DDD2] bg-white text-[#0B1F33] hover:border-[#D96B2B] hover:text-[#D96B2B] shadow-xs"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#E7DDD2] bg-white px-3 text-xs font-bold uppercase tracking-wider text-[#0B1F33] transition-colors hover:border-[#D96B2B] hover:text-[#D96B2B] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer shadow-xs"
+              >
+                <span>Next</span>
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>

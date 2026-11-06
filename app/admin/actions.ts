@@ -12,7 +12,7 @@ import { invalidateContentCache } from "@/lib/content";
 import { sanitizeBlogContent } from "@/lib/blog-content";
 import { sanitizeSiteScripts } from "@/lib/site-scripts";
 import { sanitizeAssetUrl } from "@/lib/assets";
-import { saveUploadBuffer } from "@/lib/uploadsServer";
+import { saveUploadBuffer, saveUploadBufferWithSlug } from "@/lib/uploadsServer";
 import { isSocialPlatform, legacySocialFromLinks, sanitizeSocialUrl, SOCIAL_PLATFORMS, type SocialLink } from "@/lib/social";
 
 export type AuthState = { error?: string; success?: string };
@@ -94,18 +94,37 @@ function validateImageFile(file: File) {
   }
 }
 
-async function uploadAdminImage(client: SupabaseClient, file: File, folder: string) {
+async function uploadAdminImage(
+  client: SupabaseClient,
+  file: File,
+  folder: string,
+  slug?: string
+) {
   validateImageFile(file);
+
+  if (slug) {
+    // Admin-chosen slug → exact filename (upsert to replace previous version)
+    const { url, storagePath } = await saveUploadBufferWithSlug(
+      Buffer.from(await file.arrayBuffer()),
+      slug,
+      file.name,
+      file.type,
+      folder
+    );
+    return { path: storagePath, url };
+  }
+
+  // No slug → random UUID filename (original behaviour)
   const normalizedName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
   const safeName = normalizedName.replace(/^-+|-+$/g, "").slice(-120) || "image";
-  const path = `${folder}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
+  const storagePath = `${folder}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
   const { error } = await client.storage
     .from("site-media")
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(storagePath, file, { contentType: file.type, upsert: false });
   if (error) throw new Error(error.message);
 
-  const { data } = client.storage.from("site-media").getPublicUrl(path);
-  return { path, url: data.publicUrl };
+  const { data } = client.storage.from("site-media").getPublicUrl(storagePath);
+  return { path: storagePath, url: data.publicUrl };
 }
 
 async function audit(action: string, entity: string, entityId?: string) {
@@ -329,8 +348,15 @@ export async function saveCollectionItem(
   let uploadedImage: { path: string; url: string } | null = null;
   if (collection !== "faqs") {
     const imageFile = formData.get("image_file");
+    // Admin-chosen image name / slug (optional)
+    const imageSlug = text(formData, "image_name") || text(formData, "slug") || "";
     if (imageFile instanceof File && imageFile.size > 0) {
-      uploadedImage = await uploadAdminImage(client, imageFile, `collections/${collection}`);
+      uploadedImage = await uploadAdminImage(
+        client,
+        imageFile,
+        `collections/${collection}`,
+        imageSlug || undefined
+      );
       if (collection === "testimonials") payload.avatar = uploadedImage.url;
       else payload.image = uploadedImage.url;
     }
@@ -556,7 +582,9 @@ export async function uploadSiteMedia(formData: FormData) {
   const client = await mutationClient();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("Select a file to upload.");
-  const uploadedImage = await uploadAdminImage(client, file, "library");
+  // Optional admin-chosen slug
+  const slug = String(formData.get("image_name") || "").trim();
+  const uploadedImage = await uploadAdminImage(client, file, "library", slug || undefined);
   await audit("upload", "site-media", uploadedImage.path);
   revalidatePath("/admin/media");
 }

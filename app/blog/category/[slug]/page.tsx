@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Clock, FolderOpen, User } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/shared/Container";
+import { Pagination } from "@/components/shared/Pagination";
 import { getPublishedBlogsByCategory, getCategories } from "@/app/admin/blog/actions";
 import { resolveBlogThumbnail } from "@/lib/blogImage";
 import { slugify } from "@/lib/brandedDownloads";
@@ -28,12 +29,19 @@ export async function generateMetadata({
   return { title, description };
 }
 
+const PAGE_SIZE = 20;
+
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ page?: string }>;
 }) {
   const { slug } = await params;
+  const { page: pageParam } = (await searchParams) || {};
+  const requestedPage = Math.max(1, Number.parseInt(pageParam || "1", 10) || 1);
+
   const cleanSlug = decodeURIComponent(slug);
   const categories = await getCategories();
   const cat = categories.find(
@@ -44,7 +52,11 @@ export default async function CategoryPage({
   );
 
   const categoryName = cat?.name || cleanSlug.replace(/-/g, " ");
-  const posts = await getPublishedBlogsByCategory(categoryName);
+  const allPosts = await getPublishedBlogsByCategory(categoryName);
+  const total = allPosts.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const posts = allPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -140,6 +152,16 @@ export default async function CategoryPage({
                   </div>
                 </article>
               ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-12 pt-8 border-t border-[#E7DDD2]">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                basePath={`/blog/category/${slug}`}
+              />
             </div>
           )}
         </Container>

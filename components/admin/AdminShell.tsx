@@ -121,6 +121,9 @@ export function AdminShell({ children, email, role = "Administrator" }: { childr
   const pathname = usePathname();
   const activeItem = allItems.find((item) => isActive(pathname, item));
   const initials = email.slice(0, 2).toUpperCase();
+  const isFullWidth =
+    pathname?.startsWith("/admin/blog/new") ||
+    pathname?.startsWith("/admin/blog/edit");
   return <div className="admin-app min-h-screen bg-[#F7F4EF] text-[#111827]">
     {drawerOpen && <button aria-label="Close admin navigation" onClick={() => setDrawerOpen(false)} className="fixed inset-0 z-40 bg-[#071827]/55 lg:hidden" />}
     <aside className={`fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/10 bg-[#071827] p-5 text-white transition-[transform,opacity] duration-200 lg:translate-x-0 ${drawerOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -131,7 +134,7 @@ export function AdminShell({ children, email, role = "Administrator" }: { childr
       <div className="min-h-0 flex-1 overflow-y-auto py-6 pr-1"><AdminNav onNavigate={() => setDrawerOpen(false)} /></div>
     </aside>
     <div className="min-h-screen lg:pl-[264px]">
-      <header className="sticky top-0 z-30 border-b border-[#E7DDD2] bg-[#FFFDF9]/95 backdrop-blur-md"><div className="mx-auto flex h-[72px] max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-30 border-b border-[#E7DDD2] bg-[#FFFDF9]/95 backdrop-blur-md"><div className={`mx-auto flex h-[72px] items-center gap-3 px-4 sm:px-6 lg:px-8 ${isFullWidth ? "w-full max-w-none" : "max-w-[1600px]"}`}>
         <button type="button" onClick={() => setDrawerOpen(true)} className="grid size-10 place-items-center rounded-lg border border-[#E7DDD2] bg-white text-[#0B1F33] transition-colors hover:bg-[#FFF9F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2B] lg:hidden" aria-label="Open navigation"><PanelLeft className="size-5" /></button>
         <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-[#667085]">Fable Packaging / <span className="text-[#0B1F33]">{activeItem?.label || "Admin"}</span></p><p className="hidden pt-0.5 text-[11px] text-[#98A2B3] sm:block">Content management workspace</p></div>
         <SearchControl />
@@ -140,7 +143,7 @@ export function AdminShell({ children, email, role = "Administrator" }: { childr
           {profileOpen && <div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-40 w-48 rounded-xl border border-[#E7DDD2] bg-white p-1.5"><Link href="/admin/settings" onClick={() => setProfileOpen(false)} role="menuitem" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#0B1F33] transition-colors hover:bg-[#FFF9F2]">Profile & settings</Link><Link href="/" onClick={() => setProfileOpen(false)} role="menuitem" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#0B1F33] transition-colors hover:bg-[#FFF9F2]">View website</Link><form action={logoutAction} className="mt-1 border-t border-[#F0EAE2] pt-1"><button role="menuitem" className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#DC3545] transition-colors hover:bg-[#FFF5F4]">Sign out</button></form></div>}
         </div>
       </div></header>
-      <main className="mx-auto min-w-0 max-w-[1600px] p-4 sm:p-6 lg:p-8 xl:p-10">{children}</main>
+      <main className={`mx-auto min-w-0 p-4 sm:p-6 lg:p-8 xl:p-10 ${isFullWidth ? "w-full max-w-none" : "max-w-[1600px]"}`}>{children}</main>
     </div>
   </div>;
 }
